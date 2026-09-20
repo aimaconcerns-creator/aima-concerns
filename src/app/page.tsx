@@ -1,70 +1,10 @@
-'use client'
-
-import { useState } from 'react'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/utils/supabase/client'
+import Link from 'next/link'
+import { createClient } from '@/utils/supabase/server'
 
-export default function RegisterPage() {
-  const router = useRouter()
-  const [step, setStep] = useState<'register' | 'verify'>('register')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [otp, setOtp] = useState('')
-  const [message, setMessage] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setMessage('')
-    setLoading(true)
-
-    const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
-
-    setLoading(false)
-
-    if (error) {
-      setMessage(`Error: ${error.message}`)
-    } else {
-      setMessage('')
-      setStep('verify')
-    }
-  }
-
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setMessage('')
-    setLoading(true)
-
-    const supabase = createClient()
-    const { error } = await supabase.auth.verifyOtp({
-      email,
-      token: otp,
-      type: 'signup',
-    })
-
-    setLoading(false)
-
-    if (error) {
-      setMessage(`Error: ${error.message}`)
-    } else {
-      router.push('/')
-    }
-  }
-
-  const inputStyle = {
-    width: '100%',
-    padding: '10px',
-    marginTop: '5px',
-    backgroundColor: '#fff',
-    color: '#000',
-    border: '1px solid #ccc',
-    borderRadius: '6px',
-  }
+export default async function Home() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
   return (
     <div
@@ -80,144 +20,89 @@ export default function RegisterPage() {
         alignItems: 'center',
         fontFamily: 'sans-serif',
         padding: '20px',
+        textAlign: 'center',
       }}
     >
-      <div style={{ textAlign: 'center', marginBottom: '25px' }}>
-        <Image
-          src="/logo.png"
-          alt="Aima Concerns"
-          width={90}
-          height={90}
-          style={{ margin: '0 auto 10px', objectFit: 'contain' }}
-        />
-        <h1
-          style={{
-            color: '#fff',
-            fontSize: '28px',
-            fontWeight: 'bold',
-            margin: 0,
-            textShadow: '0 2px 6px rgba(0,0,0,0.6)',
-          }}
-        >
-          Aima Concerns
-        </h1>
-        <p
-          style={{
-            color: '#5FAE8C',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            marginTop: '4px',
-            letterSpacing: '1px',
-          }}
-        >
-          CUSTOMER PORTAL
-        </p>
-      </div>
-
-      <div
+      <Image
+        src="/logo.png"
+        alt="Aima Concerns"
+        width={110}
+        height={110}
+        style={{ margin: '0 auto 15px', objectFit: 'contain' }}
+      />
+      <h1
         style={{
-          backgroundColor: '#fff',
-          padding: '35px',
-          borderRadius: '10px',
-          maxWidth: '380px',
-          width: '100%',
-          textAlign: 'center',
-          boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
+          color: '#fff',
+          fontSize: '34px',
+          fontWeight: 'bold',
+          margin: 0,
+          textShadow: '0 2px 6px rgba(0,0,0,0.6)',
         }}
       >
-        {step === 'register' && (
-          <>
-            <h2 style={{ color: '#155263', fontSize: '20px', marginBottom: '20px' }}>
-              Create an Account
-            </h2>
-            <form onSubmit={handleRegister} style={{ textAlign: 'left' }}>
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ color: '#155263', fontWeight: 'bold' }}>Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  style={inputStyle}
-                />
-              </div>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ color: '#155263', fontWeight: 'bold' }}>Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  style={inputStyle}
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  backgroundColor: '#5FAE8C',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  fontSize: '15px',
-                }}
-              >
-                {loading ? 'Please wait...' : 'Register'}
-              </button>
-            </form>
-          </>
-        )}
+        Aima Concerns
+      </h1>
+      <p
+        style={{
+          color: '#5FAE8C',
+          fontSize: '18px',
+          fontWeight: 'bold',
+          marginTop: '6px',
+          letterSpacing: '1px',
+          marginBottom: '30px',
+        }}
+      >
+        CUSTOMER PORTAL
+      </p>
 
-        {step === 'verify' && (
-          <>
-            <h2 style={{ color: '#155263', fontSize: '20px', marginBottom: '10px' }}>
-              Enter Verification Code
-            </h2>
-            <p style={{ color: '#555', fontSize: '14px', marginBottom: '20px' }}>
-              We sent a 6-digit code to {email}
-            </p>
-            <form onSubmit={handleVerify} style={{ textAlign: 'left' }}>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ color: '#155263', fontWeight: 'bold' }}>Code</label>
-                <input
-                  type="text"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  required
-                  maxLength={6}
-                  style={{ ...inputStyle, textAlign: 'center', fontSize: '20px', letterSpacing: '4px' }}
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  backgroundColor: '#5FAE8C',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  fontSize: '15px',
-                }}
-              >
-                {loading ? 'Verifying...' : 'Verify'}
-              </button>
-            </form>
-          </>
-        )}
-
-        {message && (
-          <p style={{ marginTop: '15px', color: '#155263', fontSize: '14px' }}>{message}</p>
-        )}
-      </div>
+      {user ? (
+        <div>
+          <p style={{ color: '#fff', marginBottom: '15px' }}>
+            Welcome back, {user.email}
+          </p>
+          <Link
+            href="/dashboard"
+            style={{
+              padding: '12px 30px',
+              backgroundColor: '#5FAE8C',
+              color: '#fff',
+              borderRadius: '6px',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+            }}
+          >
+            Go to Dashboard
+          </Link>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <Link
+            href="/login"
+            style={{
+              padding: '12px 30px',
+              backgroundColor: '#5FAE8C',
+              color: '#fff',
+              borderRadius: '6px',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+            }}
+          >
+            Login
+          </Link>
+          <Link
+            href="/register"
+            style={{
+              padding: '12px 30px',
+              backgroundColor: '#fff',
+              color: '#155263',
+              borderRadius: '6px',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+            }}
+          >
+            Register
+          </Link>
+        </div>
+      )}
     </div>
   )
 }

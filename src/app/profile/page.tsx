@@ -48,10 +48,67 @@ export default function ProfilePage() {
     loadProfile()
   }, [router])
 
+  const formatCnic = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 13)
+    let formatted = digits
+    if (digits.length > 5 && digits.length <= 12) {
+      formatted = `${digits.slice(0, 5)}-${digits.slice(5)}`
+    } else if (digits.length > 12) {
+      formatted = `${digits.slice(0, 5)}-${digits.slice(5, 12)}-${digits.slice(12)}`
+    }
+    return formatted
+  }
+
+  const handleCnicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCnic(formatCnic(e.target.value))
+  }
+
+  const isValidCnic = (value: string) => {
+    return /^\d{5}-\d{7}-\d{1}$/.test(value)
+  }
+
+  const isAdult = (dobValue: string) => {
+    const birthDate = new Date(dobValue)
+    const today = new Date()
+    let age = today.getFullYear() - birthDate.getFullYear()
+    const monthDiff = today.getMonth() - birthDate.getMonth()
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--
+    }
+    return age >= 18
+  }
+
+  const isValidPassportExpiry = (expiryValue: string) => {
+    const expiryDate = new Date(expiryValue)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const maxFutureDate = new Date()
+    maxFutureDate.setFullYear(maxFutureDate.getFullYear() + 15)
+
+    return expiryDate > today && expiryDate <= maxFutureDate
+  }
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSaving(true)
     setMessage('')
+
+    if (cnic && !isValidCnic(cnic)) {
+      setMessage('Error: CNIC must be in the format 12345-1234567-1')
+      return
+    }
+
+    if (dob && !isAdult(dob)) {
+      setMessage('Error: You must be 18 years or older to register.')
+      return
+    }
+
+    if (passportExpiry && !isValidPassportExpiry(passportExpiry)) {
+      setMessage('Error: Passport expiry date must be a realistic future date (within the next 15 years).')
+      return
+    }
+
+    setSaving(true)
 
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -138,7 +195,9 @@ export default function ProfilePage() {
           <input
             type="text"
             value={cnic}
-            onChange={(e) => setCnic(e.target.value)}
+            onChange={handleCnicChange}
+            placeholder="12345-1234567-1"
+            maxLength={15}
             style={inputStyle}
           />
         </div>

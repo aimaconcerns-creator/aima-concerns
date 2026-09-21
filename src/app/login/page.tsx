@@ -18,18 +18,43 @@ export default function LoginPage() {
     setLoading(true)
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
 
-    setLoading(false)
-
     if (error) {
-      setMessage(`Error: ${error.message}`)
-    } else {
-      router.push('/')
+      setLoading(false)
+      setMessage('Error: ' + error.message)
+      return
     }
+
+    const userId = data.user?.id
+
+    if (userId) {
+      const { data: profile } = await supabase
+        .from('csp')
+        .select('approval_status')
+        .eq('id', userId)
+        .single()
+
+      if (profile?.approval_status === 'Pending') {
+        await supabase.auth.signOut()
+        setLoading(false)
+        setMessage('Your application is still pending approval. Please wait for an email confirmation before logging in.')
+        return
+      }
+
+      if (profile?.approval_status === 'Rejected') {
+        await supabase.auth.signOut()
+        setLoading(false)
+        setMessage('Your application was not approved. Please contact Aima Concerns for more information.')
+        return
+      }
+    }
+
+    setLoading(false)
+    router.push('/')
   }
 
   const inputStyle = {

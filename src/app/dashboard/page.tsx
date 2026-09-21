@@ -75,20 +75,36 @@ export default async function DashboardPage() {
               PKR {Number(balance).toLocaleString()}
             </p>
           </div>
-          <Link
-            href="/wallet/add-money"
-            style={{
-              padding: '12px 25px',
-              backgroundColor: '#5FAE8C',
-              color: '#fff',
-              borderRadius: '6px',
-              textDecoration: 'none',
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            + Add Money
-          </Link>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Link
+              href="/wallet/history"
+              style={{
+                padding: '12px 20px',
+                backgroundColor: 'rgba(255,255,255,0.15)',
+                color: '#fff',
+                borderRadius: '6px',
+                textDecoration: 'none',
+                fontWeight: 'bold',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              History
+            </Link>
+            <Link
+              href="/wallet/add-money"
+              style={{
+                padding: '12px 25px',
+                backgroundColor: '#5FAE8C',
+                color: '#fff',
+                borderRadius: '6px',
+                textDecoration: 'none',
+                fontWeight: 'bold',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              + Add Money
+            </Link>
+          </div>
         </div>
 
         <div

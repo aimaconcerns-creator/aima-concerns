@@ -19,10 +19,18 @@ async function approveTopup(formData: FormData) {
   const currentBalance = Number(wallet?.balance ?? 0)
   const newBalance = currentBalance + amount
 
-  await supabase
+await supabase
     .from('wallets')
     .update({ balance: newBalance, updated_at: new Date().toISOString() })
     .eq('id', customerId)
+
+  await supabase.from('wallet_transactions').insert({
+    customer_id: customerId,
+    type: 'Top-up',
+    amount: amount,
+    balance_after: newBalance,
+    note: 'Top-up approved via ' + formData.get('method'),
+  })
 
   await supabase
     .from('topup_requests')
@@ -106,7 +114,7 @@ export default async function AdminPaymentsPage() {
                       <form action={approveTopup}>
                         <input type="hidden" name="requestId" value={r.id} />
                         <input type="hidden" name="customerId" value={r.customer_id} />
-                        <input type="hidden" name="amount" value={r.amount} />
+                        <input type="hidden" name="amount" value={r.amount} />                         <input type="hidden" name="method" value={r.payment_method} />
                         <button
                           type="submit"
                           style={{

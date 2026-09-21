@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
 
@@ -73,6 +74,7 @@ export default async function AdminCustomersPage() {
               <th style={{ padding: '12px 15px', color: '#155263' }}>Full Name</th>
               <th style={{ padding: '12px 15px', color: '#155263' }}>Email</th>
               <th style={{ padding: '12px 15px', color: '#155263' }}>Balance</th>
+              <th style={{ padding: '12px 15px', color: '#155263' }}>Ledger</th>
               <th style={{ padding: '12px 15px', color: '#155263' }}>Deduct Balance</th>
             </tr>
           </thead>
@@ -86,6 +88,22 @@ export default async function AdminCustomersPage() {
                 <td style={{ padding: '12px 15px' }}>{c['Email'] || '—'}</td>
                 <td style={{ padding: '12px 15px', fontWeight: 'bold' }}>
                   PKR {(balanceMap.get(c.id) ?? 0).toLocaleString()}
+                </td>
+                <td style={{ padding: '12px 15px' }}>
+                  <Link
+                    href={'/admin/customers/' + c.id}
+                    style={{
+                      padding: '6px 14px',
+                      backgroundColor: '#155263',
+                      color: '#fff',
+                      borderRadius: '6px',
+                      textDecoration: 'none',
+                      fontSize: '13px',
+                      display: 'inline-block',
+                    }}
+                  >
+                    View Ledger
+                  </Link>
                 </td>
                 <td style={{ padding: '12px 15px' }}>
                   <form

@@ -53,10 +53,13 @@ export default async function AdminLayout({
 
         <nav style={{ flex: 1, paddingTop: '10px' }}>
           <Link href="/admin" style={linkStyle}>Dashboard</Link>
+          <Link href="/admin/approvals" style={linkStyle}>Pending Approvals</Link>
           <Link href="/admin/customers" style={linkStyle}>Customers</Link>
           <Link href="/admin/payments" style={linkStyle}>Payments</Link>
           <Link href="/admin/visa" style={linkStyle}>Visa Applications</Link>
           <Link href="/admin/packages" style={linkStyle}>Packages</Link>
+          <Link href="/admin/manifests" style={linkStyle}>Group Manifests</Link>
+          <Link href="/admin/airlines" style={linkStyle}>Manage Airlines</Link>
         </nav>
 
         <div style={{ padding: '20px', borderTop: '1px solid rgba(255,255,255,0.15)' }}>

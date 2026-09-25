@@ -103,6 +103,11 @@ export default function ProfilePage() {
   }
 
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const supabaseDebug = createClient()
+    const { data: whoAmI } = await supabaseDebug.rpc('whoami')
+    console.log('Logged in as (userId):', userId)
+    console.log('Supabase sees you as (whoami):', whoAmI)
+    
     const file = e.target.files?.[0]
     if (!file || !userId) return
 

@@ -56,106 +56,86 @@ export default async function AdminCustomersPage() {
   )
 
   return (
-    <div style={{ padding: '30px' }}>
-      <h1 style={{ color: '#155263', marginBottom: '20px' }}>Customers</h1>
+    <div style={{ padding: '34px' }}>
+      <style>{`
+        .cust-table-wrap {
+          border-radius: 14px; overflow: auto; border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.02); box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+        }
+        table.cust-table { width: 100%; border-collapse: collapse; min-width: 860px; }
+        .cust-table thead tr { background: rgba(255,255,255,0.03); text-align: left; }
+        .cust-table th {
+          padding: 14px 16px; color: #7d93a3; font-size: 12px; text-transform: uppercase;
+          letter-spacing: 0.06em; font-weight: 700;
+        }
+        .cust-table td { padding: 16px; border-top: 1px solid rgba(255,255,255,0.06); }
+        .cust-code { font-weight: 800; color: #d9a441; font-size: 13.5px; }
+        .cust-cell { color: #cfe0ea; font-size: 13.5px; }
+        .balance { font-weight: 700; color: #fff; font-size: 14.5px; }
+        .btn-ledger {
+          padding: 6px 14px; background: rgba(47, 127, 122, 0.18); color: #6fd0c8;
+          border-radius: 6px; text-decoration: none; font-size: 12.5px; font-weight: 700; display: inline-block;
+        }
+        .deduct-form { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .deduct-input {
+          padding: 7px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12);
+          background: rgba(255,255,255,0.04); color: #fff; font-size: 12.5px;
+        }
+        .deduct-input::placeholder { color: #5a7184; }
+        .btn-deduct {
+          padding: 7px 14px; background: rgba(217, 83, 79, 0.18); color: #ff8f8a;
+          border: none; border-radius: 6px; cursor: pointer; font-size: 12.5px; font-weight: 700;
+        }
+      `}</style>
 
-      <div
-        style={{
-          backgroundColor: '#fff',
-          borderRadius: '10px',
-          overflow: 'hidden',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.06)',
-        }}
-      >
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <h1 style={{ color: '#fff', margin: '0 0 24px', fontSize: '22px', fontWeight: 800 }}>
+        Customers
+      </h1>
+
+      <div className="cust-table-wrap">
+        <table className="cust-table">
           <thead>
-            <tr style={{ backgroundColor: '#f0f3f4', textAlign: 'left' }}>
-              <th style={{ padding: '12px 15px', color: '#155263' }}>Customer ID</th>
-              <th style={{ padding: '12px 15px', color: '#155263' }}>Full Name</th>
-              <th style={{ padding: '12px 15px', color: '#155263' }}>Email</th>
-              <th style={{ padding: '12px 15px', color: '#155263' }}>Balance</th>
-              <th style={{ padding: '12px 15px', color: '#155263' }}>Profile</th>
-              <th style={{ padding: '12px 15px', color: '#155263' }}>Ledger</th>
-              <th style={{ padding: '12px 15px', color: '#155263' }}>Deduct Balance</th>
+            <tr>
+              <th>Customer ID</th>
+              <th>Full Name</th>
+              <th>Email</th>
+              <th>Balance</th>
+              <th>Ledger</th>
+              <th>Deduct Balance</th>
             </tr>
           </thead>
           <tbody>
             {customers?.map((c: any) => (
-              <tr key={c.id} style={{ borderTop: '1px solid #eee' }}>
-                <td style={{ padding: '12px 15px', fontWeight: 'bold', color: '#155263' }}>
-                  {c.customer_code}
-                </td>
-                <td style={{ padding: '12px 15px' }}>{c['Full Name:'] || '—'}</td>
-                <td style={{ padding: '12px 15px' }}>{c['Email'] || '—'}</td>
-                <td style={{ padding: '12px 15px', fontWeight: 'bold' }}>
-                  PKR {(balanceMap.get(c.id) ?? 0).toLocaleString()}
-                </td>
-                <td style={{ padding: '12px 15px' }}>
-                  <Link
-                    href={'/admin/customers/' + c.id + '/profile'}
-                    style={{
-                      padding: '6px 14px',
-                      backgroundColor: '#5FAE8C',
-                      color: '#fff',
-                      borderRadius: '6px',
-                      textDecoration: 'none',
-                      fontSize: '13px',
-                      display: 'inline-block',
-                    }}
-                  >
-                    View Profile
-                  </Link>
-                </td>
-                <td style={{ padding: '12px 15px' }}>
-                  <Link
-                    href={'/admin/customers/' + c.id}
-                    style={{
-                      padding: '6px 14px',
-                      backgroundColor: '#155263',
-                      color: '#fff',
-                      borderRadius: '6px',
-                      textDecoration: 'none',
-                      fontSize: '13px',
-                      display: 'inline-block',
-                    }}
-                  >
+              <tr key={c.id}>
+                <td className="cust-code">{c.customer_code}</td>
+                <td className="cust-cell">{c['Full Name:'] || '—'}</td>
+                <td className="cust-cell">{c['Email'] || '—'}</td>
+                <td className="balance">PKR {(balanceMap.get(c.id) ?? 0).toLocaleString()}</td>
+                <td>
+                  <Link href={'/admin/customers/' + c.id} className="btn-ledger">
                     View Ledger
                   </Link>
                 </td>
-                <td style={{ padding: '12px 15px' }}>
-                  <form
-                    action={adjustBalance}
-                    style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}
-                  >
+                <td>
+                  <form action={adjustBalance} className="deduct-form">
                     <input type="hidden" name="customerId" value={c.id} />
                     <input
                       type="number"
                       name="amount"
                       placeholder="Amount"
                       required
-                      style={{ width: '90px', padding: '6px', borderRadius: '6px', border: '1px solid #ccc' }}
+                      className="deduct-input"
+                      style={{ width: '90px' }}
                     />
                     <input
                       type="text"
                       name="note"
                       placeholder="Reason"
                       required
-                      style={{ width: '130px', padding: '6px', borderRadius: '6px', border: '1px solid #ccc' }}
+                      className="deduct-input"
+                      style={{ width: '130px' }}
                     />
-                    <button
-                      type="submit"
-                      style={{
-                        padding: '6px 12px',
-                        backgroundColor: '#d9534f',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '13px',
-                      }}
-                    >
-                      Deduct
-                    </button>
+                    <button type="submit" className="btn-deduct">Deduct</button>
                   </form>
                 </td>
               </tr>

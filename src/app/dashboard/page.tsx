@@ -1,8 +1,11 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import { Montserrat } from 'next/font/google'
 import { createClient } from '@/utils/supabase/server'
 import LogoutButton from './LogoutButton'
+
+const montserrat = Montserrat({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'] })
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -27,115 +30,95 @@ export default async function DashboardPage() {
   const displayName = profile?.['Full Name:'] || user.email
   const balance = wallet?.balance ?? 0
 
-  const cardStyle = {
-    backgroundColor: '#fff',
-    borderRadius: '10px',
-    padding: '25px',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
-  }
-
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f5f7f8', fontFamily: 'sans-serif' }}>
-      <div
-        style={{
-          backgroundColor: '#155263',
-          padding: '20px 30px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Image src="/logo.png" alt="Aima Concerns" width={40} height={40} style={{ objectFit: 'contain' }} />
-          <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '18px' }}>Aima Concerns</span>
-        </div>
-        <LogoutButton />
-      </div>
+    <div className={montserrat.className}>
+      <style>{`
+        * { box-sizing: border-box; }
+        body { margin: 0; }
+        .wrap { min-height: 100vh; background: #f4f7f9; }
 
-      <div style={{ padding: '30px', maxWidth: '900px', margin: '0 auto' }}>
-        <h1 style={{ color: '#155263', marginBottom: '5px' }}>Welcome, {displayName}</h1>
-        <p style={{ color: '#666', marginBottom: '20px' }}>Here&apos;s an overview of your account</p>
+        .topbar {
+          background: linear-gradient(90deg, #0d3b47 0%, #2f7f7a 100%);
+          padding: 18px 30px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 14px; }
+        .topbar-left a { color: #fff; font-size: 20px; text-decoration: none; display: flex; align-items: center; }
+        .brand-name { color: #fff; font-weight: 800; font-size: 18px; letter-spacing: 0.02em; }
 
-        <div
-          style={{
-            backgroundColor: '#155263',
-            borderRadius: '10px',
-            padding: '25px',
-            marginBottom: '25px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '15px',
-          }}
-        >
-          <div>
-            <p style={{ color: '#a8c5cc', margin: 0, fontSize: '14px' }}>Wallet Balance</p>
-            <p style={{ color: '#fff', margin: 0, fontSize: '32px', fontWeight: 'bold' }}>
-              PKR {Number(balance).toLocaleString()}
-            </p>
+        .content { padding: 30px 20px; max-width: 900px; margin: 0 auto; }
+        h1 { color: #12335f; margin: 0 0 4px; font-size: 26px; font-weight: 800; }
+        .sub { color: #7a8699; margin: 0 0 22px; font-size: 15px; }
+
+        .hero {
+          border-radius: 18px; padding: 26px; margin-bottom: 26px; color: #fff;
+          background: linear-gradient(135deg, #0d3b47 0%, #2f7f7a 45%, #5FAE8C 80%, #f0a860 120%);
+          box-shadow: 0 10px 30px rgba(13, 59, 71, 0.25);
+          display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+        }
+        .hero .label { margin: 0; color: rgba(255,255,255,0.8); font-size: 13px; letter-spacing: 0.05em; text-transform: uppercase; }
+        .hero .amount { margin: 6px 0 0; font-size: 32px; font-weight: 800; }
+        .hero-actions { display: flex; gap: 10px; }
+        .hero-actions a {
+          padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 700; white-space: nowrap; font-size: 14px;
+        }
+        .btn-ghost { background: rgba(255,255,255,0.18); color: #fff; }
+        .btn-solid { background: #fff; color: #2f7f5a; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
+        .card {
+          background: #fff; border-radius: 14px; padding: 22px;
+          box-shadow: 0 6px 20px rgba(18, 51, 95, 0.07); text-decoration: none; color: inherit; display: block;
+        }
+        .card h3 { color: #12335f; margin: 0 0 8px; font-size: 16px; font-weight: 700; }
+        .card p { color: #7a8699; margin: 0; font-size: 14px; line-height: 1.5; }
+        .card.disabled { opacity: 0.55; }
+      `}</style>
+
+      <div className="wrap">
+        <div className="topbar">
+          <div className="topbar-left">
+            <Link href="/" aria-label="Back to home">←</Link>
+            <Image src="/logo.png" alt="Aima Concerns" width={36} height={36} style={{ objectFit: 'contain' }} />
+            <span className="brand-name">Aima Concerns</span>
           </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Link
-              href="/wallet/history"
-              style={{
-                padding: '12px 20px',
-                backgroundColor: 'rgba(255,255,255,0.15)',
-                color: '#fff',
-                borderRadius: '6px',
-                textDecoration: 'none',
-                fontWeight: 'bold',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              History
-            </Link>
-            <Link
-              href="/wallet/add-money"
-              style={{
-                padding: '12px 25px',
-                backgroundColor: '#5FAE8C',
-                color: '#fff',
-                borderRadius: '6px',
-                textDecoration: 'none',
-                fontWeight: 'bold',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              + Add Money
-            </Link>
-          </div>
+          <LogoutButton />
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '20px',
-          }}
-        >
-          <Link href="/profile" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <div style={cardStyle}>
-              <h3 style={{ color: '#155263', marginTop: 0 }}>My Profile</h3>
-              <p style={{ color: '#666', fontSize: '14px' }}>
-                View and update your personal details, CNIC, and passport information.
-              </p>
+        <div className="content">
+          <h1>Welcome, {displayName}</h1>
+          <p className="sub">Here&apos;s an overview of your account</p>
+
+          <div className="hero">
+            <div>
+              <p className="label">Wallet Balance</p>
+              <p className="amount">PKR {Number(balance).toLocaleString()}</p>
             </div>
-          </Link>
-
-          <div style={{ ...cardStyle, opacity: 0.6 }}>
-            <h3 style={{ color: '#155263', marginTop: 0 }}>My Bookings</h3>
-            <p style={{ color: '#666', fontSize: '14px' }}>Coming soon</p>
+            <div className="hero-actions">
+              <Link href="/wallet/history" className="btn-ghost">History</Link>
+              <Link href="/wallet/add-money" className="btn-solid">+ Add Money</Link>
+            </div>
           </div>
 
-          <div style={{ ...cardStyle, opacity: 0.6 }}>
-            <h3 style={{ color: '#155263', marginTop: 0 }}>Visa Status</h3>
-            <p style={{ color: '#666', fontSize: '14px' }}>Coming soon</p>
-          </div>
+          <div className="grid">
+            <Link href="/profile" className="card">
+              <h3>My Profile</h3>
+              <p>View and update your personal details, CNIC, and passport information.</p>
+            </Link>
 
-          <div style={{ ...cardStyle, opacity: 0.6 }}>
-            <h3 style={{ color: '#155263', marginTop: 0 }}>Documents</h3>
-            <p style={{ color: '#666', fontSize: '14px' }}>Coming soon</p>
+            <Link href="/dashboard/bookings" className="card">
+              <h3>My Bookings</h3>
+              <p>View your bookings, pay for reserved seats, and open your vouchers.</p>
+            </Link>
+
+            <div className="card disabled">
+              <h3>Visa Status</h3>
+              <p>Coming soon</p>
+            </div>
+
+            <div className="card disabled">
+              <h3>Documents</h3>
+              <p>Coming soon</p>
+            </div>
           </div>
         </div>
       </div>

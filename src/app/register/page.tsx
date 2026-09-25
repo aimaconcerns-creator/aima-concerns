@@ -1,8 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { Montserrat } from 'next/font/google'
 import { createClient } from '@/utils/supabase/client'
+
+const montserrat = Montserrat({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'] })
 
 const COUNTRY_CODES = [
   { code: '+92', label: 'Pakistan (+92)' },
@@ -34,6 +39,7 @@ export default function RegisterPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [fullName, setFullName] = useState('')
   const [dob, setDob] = useState('')
   const [countryCode, setCountryCode] = useState('+92')
@@ -130,189 +136,232 @@ export default function RegisterPage() {
     setSubmitted(true)
   }
 
-  const inputStyle = {
-    width: '100%',
-    padding: '10px',
-    marginTop: '5px',
-    backgroundColor: '#fff',
-    color: '#000',
-    border: '1px solid #ccc',
-    borderRadius: '6px',
-    boxSizing: 'border-box' as const,
-  }
-
-  const labelStyle = { color: '#155263', fontWeight: 'bold' as const, fontSize: '14px' }
-
-  const fieldWrapStyle = { flex: '1 1 260px', marginBottom: '14px' }
-
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f5f7f8', fontFamily: 'sans-serif' }}>
-      <div
-        style={{
-          backgroundImage: 'linear-gradient(rgba(10,20,30,0.75), rgba(10,20,30,0.75)), url(/karbala-bg.jpg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          padding: '40px 20px',
-          textAlign: 'center',
-        }}
-      >
-        <h1 style={{ color: '#fff', fontSize: '34px', margin: 0, fontWeight: 'bold', textShadow: '0 2px 6px rgba(0,0,0,0.6)' }}>
-          Aima Concerns
-        </h1>
-        <p style={{ color: '#fff', fontSize: '18px', margin: '4px 0 0', fontWeight: 'bold' }}>
-          Customer Portal
-        </p>
-        <p style={{ color: '#5FAE8C', fontSize: '14px', marginTop: '6px', fontStyle: 'italic' }}>
-          Your Journey, Our Concern
-        </p>
+    <div className={`wrap ${montserrat.className}`}>
+      <style>{`
+        * { box-sizing: border-box; }
+        body { margin: 0; }
+        .wrap { min-height: 100vh; background: #f8fafc; }
+
+        .banner {
+          background: linear-gradient(135deg, #0d3b47 0%, #2f7f7a 40%, #5FAE8C 70%, #f0a860 100%);
+          border-bottom: 3px solid #d9a441; color: #fff; text-align: center; padding: 40px 20px 100px;
+        }
+        .banner h1 { margin: 10px 0 0; font-size: clamp(28px, 4vw, 48px); font-weight: 800; letter-spacing: 2px; line-height: 1.1; }
+        .sub { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 12px; }
+        .sub .line { height: 1px; width: 50px; background: #f3d9a4; }
+        .sub span { letter-spacing: 0.4em; font-size: clamp(12px, 1.6vw, 18px); font-weight: 500; }
+        .tagline { margin-top: 16px; letter-spacing: 0.25em; font-size: clamp(11px, 1.3vw, 15px); }
+        .badge {
+          display: inline-block; margin-top: 18px; padding: 7px 20px; border: 2px solid #fff; border-radius: 4px;
+          letter-spacing: 0.3em; font-size: 12px; font-weight: 700;
+        }
+
+        .container { max-width: 900px; margin: -60px auto 40px; padding: 0 20px; position: relative; z-index: 2; }
+        .card { background: #fff; border-radius: 10px; padding: 40px 44px; box-shadow: 0 10px 40px rgba(18, 51, 95, 0.1); }
+        .card h2 { margin: 0; color: #12335f; font-size: 30px; font-weight: 800; }
+        .note { color: #7a8699; font-size: 14px; line-height: 1.6; margin: 10px 0 0; }
+
+        .sec {
+          color: #4a9c7a; font-size: 13px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
+          margin: 30px 0 16px; padding-bottom: 8px; border-bottom: 1px solid #e6edf3;
+        }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; }
+        .full { grid-column: 1 / -1; }
+        label { display: block; color: #12335f; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+        .inp {
+          width: 100%; height: 52px; padding: 0 14px; border: 1px solid #d5dde8; border-radius: 8px;
+          font-size: 15px; color: #12335f; background: #fff; font-family: inherit; outline: none;
+        }
+        .inp:focus { border-color: #4a9c7a; }
+        .inp::placeholder { color: #8a96a8; }
+        .phone { display: flex; gap: 8px; }
+        .phone select.inp { width: 165px; flex-shrink: 0; }
+        .pwrap { position: relative; }
+        .pwrap .inp { padding-right: 48px; }
+        .eye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 0; display: flex; }
+
+        .btn {
+          width: 100%; height: 56px; margin-top: 30px; border: none; border-radius: 8px; background: #4a9c7a; color: #fff;
+          font-size: 17px; font-weight: 700; font-family: inherit; cursor: pointer;
+        }
+        .btn:hover { background: #3f8b6c; }
+        .btn:disabled { opacity: 0.7; cursor: default; }
+        .err { margin: 16px 0 0; color: #c0392b; font-size: 14px; line-height: 1.5; }
+        .loginlink { text-align: center; margin: 22px 0 0; color: #7a8699; font-size: 14px; }
+        .loginlink a { color: #4a9c7a; font-weight: 700; text-decoration: none; }
+        .back { display: block; text-align: center; margin-top: 12px; color: #8a96a8; font-size: 13px; text-decoration: none; }
+        .back:hover { color: #12335f; }
+
+        .done { text-align: center; padding: 50px 40px; }
+        .done .tick {
+          width: 70px; height: 70px; border-radius: 50%; background: #e3f1ea; color: #4a9c7a;
+          display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;
+        }
+        .done p { color: #7a8699; line-height: 1.7; margin: 14px auto 24px; max-width: 520px; }
+        .done a { color: #4a9c7a; font-weight: 700; text-decoration: none; }
+
+        @media (max-width: 600px) {
+          .card { padding: 30px 22px; }
+          .phone { flex-direction: column; }
+          .phone select.inp { width: 100%; }
+        }
+      `}</style>
+
+      <div className="banner">
+        <Image src="/logo.png" alt="Aima Concerns" width={64} height={64} style={{ objectFit: 'contain', margin: '0 auto' }} />
+        <h1>AIMA CONCERNS</h1>
+        <div className="sub">
+          <div className="line" />
+          <span>TRAVEL &amp; TOURS</span>
+          <div className="line" />
+        </div>
+        <div className="tagline">Your Journey, Our Concerns</div>
+        <div className="badge">CUSTOMER PORTAL</div>
       </div>
 
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '30px 20px' }}>
+      <div className="container">
         {submitted ? (
-          <div
-            style={{
-              backgroundColor: '#fff',
-              padding: '40px',
-              borderRadius: '12px',
-              textAlign: 'center',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.06)',
-            }}
-          >
-            <h2 style={{ color: '#155263' }}>Application Submitted</h2>
-            <p style={{ color: '#666' }}>
+          <div className="card done">
+            <div className="tick">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12l5 5 9-10" />
+              </svg>
+            </div>
+            <h2>Application Submitted</h2>
+            <p>
               Thank you for registering with Aima Concerns. Your application is pending approval.
               You will receive an email once your account has been approved and you can log in.
             </p>
-            <a href="/" style={{ color: '#155263', fontWeight: 'bold' }}>
-              Back to Home
-            </a>
+            <Link href="/">← Back to Home</Link>
           </div>
         ) : (
-          <div
-            style={{
-              backgroundColor: '#fff',
-              padding: '35px',
-              borderRadius: '12px',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.06)',
-            }}
-          >
-            <h2 style={{ color: '#155263', marginBottom: '5px' }}>Create an Account</h2>
-            <p style={{ color: '#888', fontSize: '13px', marginBottom: '25px' }}>
+          <div className="card">
+            <h2>Create an Account</h2>
+            <p className="note">
               Please fill in your details. Full Name and Date of Birth must match your passport exactly.
             </p>
 
             <form onSubmit={handleRegister}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
-                <div style={fieldWrapStyle}>
-                  <label style={labelStyle}>Full Name (as per passport)</label>
-                  <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} required style={inputStyle} />
+              <div className="sec">Personal Details</div>
+              <div className="grid">
+                <div>
+                  <label>Full Name (as per passport)</label>
+                  <input className="inp" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
                 </div>
-
-                <div style={fieldWrapStyle}>
-                  <label style={labelStyle}>Date of Birth (as per passport)</label>
-                  <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} required style={inputStyle} />
+                <div>
+                  <label>Date of Birth (as per passport)</label>
+                  <input className="inp" type="date" value={dob} onChange={(e) => setDob(e.target.value)} required />
                 </div>
-
-                <div style={fieldWrapStyle}>
-                  <label style={labelStyle}>Email</label>
-                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required style={inputStyle} />
-                </div>
-
-                <div style={fieldWrapStyle}>
-                  <label style={labelStyle}>Password</label>
-                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} style={inputStyle} />
-                </div>
-
-                <div style={fieldWrapStyle}>
-                  <label style={labelStyle}>Phone</label>
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '5px' }}>
-                    <select
-                      value={countryCode}
-                      onChange={(e) => setCountryCode(e.target.value)}
-                      style={{ ...inputStyle, marginTop: 0, width: '130px', flexShrink: 0 }}
-                    >
-                      {COUNTRY_CODES.map((c) => (
-                        <option key={c.code} value={c.code}>{c.label}</option>
-                      ))}
-                    </select>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      required
-                      style={{ ...inputStyle, marginTop: 0 }}
-                    />
-                  </div>
-                </div>
-
-                <div style={fieldWrapStyle}>
-                  <label style={labelStyle}>CNIC</label>
-                  <input
-                    type="text"
-                    value={cnic}
-                    onChange={(e) => setCnic(formatCnic(e.target.value))}
-                    placeholder="12345-1234567-1"
-                    maxLength={15}
-                    required
-                    style={inputStyle}
-                  />
-                </div>
-
-                <div style={fieldWrapStyle}>
-                  <label style={labelStyle}>Nationality</label>
-                  <select value={nationality} onChange={(e) => setNationality(e.target.value)} required style={inputStyle}>
-                    {NATIONALITIES.map((n) => (
-                      <option key={n} value={n}>{n}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div style={fieldWrapStyle}>
-                  <label style={labelStyle}>Gender</label>
-                  <select value={gender} onChange={(e) => setGender(e.target.value)} required style={inputStyle}>
+                <div>
+                  <label>Gender</label>
+                  <select className="inp" value={gender} onChange={(e) => setGender(e.target.value)} required>
                     <option value="">Select</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
                     <option value="Other">Other</option>
                   </select>
                 </div>
-
-                <div style={{ flex: '1 1 100%', marginBottom: '14px' }}>
-                  <label style={labelStyle}>Address</label>
-                  <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} required style={inputStyle} />
+                <div>
+                  <label>Nationality</label>
+                  <select className="inp" value={nationality} onChange={(e) => setNationality(e.target.value)} required>
+                    {NATIONALITIES.map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
                 </div>
-
-                <div style={fieldWrapStyle}>
-                  <label style={labelStyle}>Passport Number</label>
-                  <input type="text" value={passportNo} onChange={(e) => setPassportNo(e.target.value)} required style={inputStyle} />
-                </div>
-
-                <div style={fieldWrapStyle}>
-                  <label style={labelStyle}>Passport Expiry Date</label>
-                  <input type="date" value={passportExpiry} onChange={(e) => setPassportExpiry(e.target.value)} required style={inputStyle} />
+                <div>
+                  <label>CNIC</label>
+                  <input
+                    className="inp"
+                    type="text"
+                    value={cnic}
+                    onChange={(e) => setCnic(formatCnic(e.target.value))}
+                    placeholder="12345-1234567-1"
+                    maxLength={15}
+                    required
+                  />
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                style={{
-                  marginTop: '10px',
-                  width: '100%',
-                  padding: '14px',
-                  backgroundColor: '#5FAE8C',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                }}
-              >
+              <div className="sec">Contact</div>
+              <div className="grid">
+                <div>
+                  <label>Phone</label>
+                  <div className="phone">
+                    <select className="inp" value={countryCode} onChange={(e) => setCountryCode(e.target.value)}>
+                      {COUNTRY_CODES.map((c) => (
+                        <option key={c.code} value={c.code}>{c.label}</option>
+                      ))}
+                    </select>
+                    <input className="inp" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                  </div>
+                </div>
+                <div>
+                  <label>Address</label>
+                  <input className="inp" type="text" value={address} onChange={(e) => setAddress(e.target.value)} required />
+                </div>
+              </div>
+
+              <div className="sec">Passport</div>
+              <div className="grid">
+                <div>
+                  <label>Passport Number</label>
+                  <input className="inp" type="text" value={passportNo} onChange={(e) => setPassportNo(e.target.value)} required />
+                </div>
+                <div>
+                  <label>Passport Expiry Date</label>
+                  <input className="inp" type="date" value={passportExpiry} onChange={(e) => setPassportExpiry(e.target.value)} required />
+                </div>
+              </div>
+
+              <div className="sec">Account</div>
+              <div className="grid">
+                <div>
+                  <label>Email</label>
+                  <input className="inp" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                </div>
+                <div>
+                  <label>Password</label>
+                  <div className="pwrap">
+                    <input
+                      className="inp"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={6}
+                    />
+                    <button type="button" className="eye" onClick={() => setShowPassword(!showPassword)} aria-label="Show or hide password">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7a8699" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        {showPassword ? (
+                          <>
+                            <path d="M3 3l18 18" />
+                            <path d="M10.6 6.1A10 10 0 0 1 12 6c6 0 9.5 6 9.5 6a17 17 0 0 1-3.2 3.9M6.6 7.6A17 17 0 0 0 2.5 12S6 18 12 18a9.7 9.7 0 0 0 4.1-.9" />
+                          </>
+                        ) : (
+                          <>
+                            <path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z" />
+                            <circle cx="12" cy="12" r="3" />
+                          </>
+                        )}
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" className="btn" disabled={loading}>
                 {loading ? 'Submitting...' : 'Submit Application'}
               </button>
             </form>
-            {message && <p style={{ marginTop: '15px', color: 'red' }}>{message}</p>}
+
+            {message && <p className="err">{message}</p>}
+
+            <p className="loginlink">
+              Already have an account? <Link href="/login">Login</Link>
+            </p>
+            <Link href="/" className="back">← Back to home</Link>
           </div>
         )}
       </div>

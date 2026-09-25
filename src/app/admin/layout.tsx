@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
-import LogoutButton from '../dashboard/LogoutButton'
+import AdminLogoutButton from './AdminLogoutButton'
 
 export default async function AdminLayout({
   children,
@@ -12,7 +12,7 @@ export default async function AdminLayout({
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/login')
+    redirect('/admin-login')
   }
 
   const { data: staff } = await supabase
@@ -58,6 +58,7 @@ export default async function AdminLayout({
           <Link href="/admin/payments" style={linkStyle}>Payments</Link>
           <Link href="/admin/visa" style={linkStyle}>Visa Applications</Link>
           <Link href="/admin/packages" style={linkStyle}>Packages</Link>
+          <Link href="/admin/tickets" style={linkStyle}>Manage Tickets</Link>
           <Link href="/admin/manifests" style={linkStyle}>Group Manifests</Link>
           <Link href="/admin/airlines" style={linkStyle}>Manage Airlines</Link>
         </nav>
@@ -66,7 +67,7 @@ export default async function AdminLayout({
           <p style={{ color: '#a8c5cc', fontSize: '12px', margin: '0 0 10px' }}>
             {staff.full_name} ({staff.role})
           </p>
-          <LogoutButton />
+          <AdminLogoutButton />
         </div>
       </div>
 

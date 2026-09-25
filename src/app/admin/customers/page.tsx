@@ -74,6 +74,7 @@ export default async function AdminCustomersPage() {
               <th style={{ padding: '12px 15px', color: '#155263' }}>Full Name</th>
               <th style={{ padding: '12px 15px', color: '#155263' }}>Email</th>
               <th style={{ padding: '12px 15px', color: '#155263' }}>Balance</th>
+              <th style={{ padding: '12px 15px', color: '#155263' }}>Profile</th>
               <th style={{ padding: '12px 15px', color: '#155263' }}>Ledger</th>
               <th style={{ padding: '12px 15px', color: '#155263' }}>Deduct Balance</th>
             </tr>
@@ -88,6 +89,22 @@ export default async function AdminCustomersPage() {
                 <td style={{ padding: '12px 15px' }}>{c['Email'] || '—'}</td>
                 <td style={{ padding: '12px 15px', fontWeight: 'bold' }}>
                   PKR {(balanceMap.get(c.id) ?? 0).toLocaleString()}
+                </td>
+                <td style={{ padding: '12px 15px' }}>
+                  <Link
+                    href={'/admin/customers/' + c.id + '/profile'}
+                    style={{
+                      padding: '6px 14px',
+                      backgroundColor: '#5FAE8C',
+                      color: '#fff',
+                      borderRadius: '6px',
+                      textDecoration: 'none',
+                      fontSize: '13px',
+                      display: 'inline-block',
+                    }}
+                  >
+                    View Profile
+                  </Link>
                 </td>
                 <td style={{ padding: '12px 15px' }}>
                   <Link

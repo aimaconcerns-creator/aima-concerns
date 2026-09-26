@@ -17,9 +17,20 @@ export default async function TicketManifestDetailPage({
 
   const { data: bookings } = await supabase
     .from('ticket_bookings')
-    .select('*, csp:customer_id (customer_code, "Full Name:", "Email")')
+    .select('*')
     .eq('ticket_id', id)
     .eq('status', 'Paid')
+
+  const customerIds = (bookings ?? []).map((b) => b.customer_id)
+
+  const { data: customers } = customerIds.length
+    ? await supabase
+        .from('csp')
+        .select('id, customer_code, "Full Name:", "Email"')
+        .in('id', customerIds)
+    : { data: [] }
+
+  const customerMap = new Map((customers ?? []).map((c: any) => [c.id, c]))
 
   const bookingIds = (bookings ?? []).map((b) => b.id)
 
@@ -128,6 +139,7 @@ export default async function TicketManifestDetailPage({
             )}
             {passengers?.map((p: any) => {
               const booking = bookingMap.get(p.ticket_booking_id)
+              const customer = booking ? customerMap.get(booking.customer_id) : undefined
               return (
                 <tr key={p.id}>
                   <td className="ref">{booking?.reference || '—'}</td>
@@ -138,7 +150,7 @@ export default async function TicketManifestDetailPage({
                   <td>{p.passport_number}</td>
                   <td>{new Date(p.passport_issue_date).toLocaleDateString('en-GB')}</td>
                   <td>{new Date(p.passport_expiry_date).toLocaleDateString('en-GB')}</td>
-                  <td>{booking?.csp?.['Full Name:'] || booking?.csp?.['Email'] || '—'}</td>
+                  <td>{customer?.['Full Name:'] || customer?.['Email'] || '—'}</td>
                   <td style={{ color: '#7d93a3' }}>{p.remarks || '—'}</td>
                 </tr>
               )

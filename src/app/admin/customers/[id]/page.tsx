@@ -30,77 +30,80 @@ export default async function CustomerLedgerPage({
   const isCredit = (type: string) => type === 'Top-up' || type === 'Adjustment - Credit' || type === 'Refund'
 
   return (
-    <div style={{ padding: '30px' }}>
-      <Link href="/admin/customers" style={{ color: '#155263', fontSize: '14px' }}>
-        Back to Customers
-      </Link>
+    <div style={{ padding: '34px' }}>
+      <style>{`
+        .back-link { color: #7d93a3; font-size: 13px; text-decoration: none; }
+        .back-link:hover { color: #cfe0ea; }
 
-      <h1 style={{ color: '#155263', marginTop: '10px', marginBottom: '5px' }}>
+        .btn-export {
+          display: inline-block; padding: 11px 22px; background: rgba(217, 164, 65, 0.15); color: #e0c060;
+          border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 700; margin: 20px 0 26px;
+        }
+
+        .ledger-table-wrap {
+          border-radius: 14px; overflow: auto; border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.02); box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+        }
+        table.ledger-table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        .ledger-table thead tr { background: rgba(255,255,255,0.03); text-align: left; }
+        .ledger-table th {
+          padding: 14px 16px; color: #7d93a3; font-size: 12px; text-transform: uppercase;
+          letter-spacing: 0.06em; font-weight: 700;
+        }
+        .ledger-table td { padding: 15px 16px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 13.5px; }
+        .date-cell { color: #a9bccb; }
+        .type-cell { color: #cfe0ea; font-weight: 600; }
+        .amount-credit { font-weight: 700; color: #5FE0A0; }
+        .amount-debit { font-weight: 700; color: #ff8f8a; }
+        .balance-cell { color: #a9bccb; }
+        .note-cell { color: #7d93a3; font-size: 13px; }
+      `}</style>
+
+      <Link href="/admin/customers" className="back-link">← Back to Customers</Link>
+
+      <h1 style={{ color: '#fff', margin: '14px 0 4px', fontSize: '22px', fontWeight: 800 }}>
         {customer?.['Full Name:'] || customer?.['Email']}
       </h1>
-      <p style={{ color: '#888', marginBottom: '20px' }}>
-        {customer?.customer_code} - Current Balance: PKR {Number(wallet?.balance ?? 0).toLocaleString()}
+      <p style={{ color: '#7d93a3', fontSize: '14px', margin: 0 }}>
+        {customer?.customer_code} — Current Balance: PKR {Number(wallet?.balance ?? 0).toLocaleString()}
       </p>
 
-      <div style={{ marginBottom: '15px' }}>
-        
-        <a
-          href={'/admin/customers/' + id + '/export'}
-          style={{
-            display: 'inline-block',
-            padding: '10px 20px',
-            backgroundColor: '#155263',
-            color: '#fff',
-            borderRadius: '6px',
-            textDecoration: 'none',
-            fontSize: '14px',
-            fontWeight: 'bold',
-          }}
-        >
-          Export to Excel
-        </a>
-      </div>
+      <a href={'/admin/customers/' + id + '/export'} className="btn-export">
+        Export to Excel
+      </a>
 
-      <div
-        style={{
-          backgroundColor: '#fff',
-          borderRadius: '10px',
-          overflow: 'hidden',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.06)',
-        }}
-      >
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <div className="ledger-table-wrap">
+        <table className="ledger-table">
           <thead>
-            <tr style={{ backgroundColor: '#f0f3f4', textAlign: 'left' }}>
-              <th style={{ padding: '12px 15px', color: '#155263' }}>Date</th>
-              <th style={{ padding: '12px 15px', color: '#155263' }}>Type</th>
-              <th style={{ padding: '12px 15px', color: '#155263' }}>Amount</th>
-              <th style={{ padding: '12px 15px', color: '#155263' }}>Balance After</th>
-              <th style={{ padding: '12px 15px', color: '#155263' }}>Note</th>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Balance After</th>
+              <th>Note</th>
             </tr>
           </thead>
           <tbody>
+            {(!transactions || transactions.length === 0) && (
+              <tr>
+                <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: '#5a7184' }}>
+                  No transactions yet.
+                </td>
+              </tr>
+            )}
             {transactions?.map((t) => (
-              <tr key={t.id} style={{ borderTop: '1px solid #eee' }}>
-                <td style={{ padding: '12px 15px' }}>
+              <tr key={t.id}>
+                <td className="date-cell">
                   {new Date(t.created_at).toLocaleDateString('en-GB')}
                 </td>
-                <td style={{ padding: '12px 15px' }}>{t.type}</td>
-                <td
-                  style={{
-                    padding: '12px 15px',
-                    fontWeight: 'bold',
-                    color: isCredit(t.type) ? '#5FAE8C' : '#d9534f',
-                  }}
-                >
+                <td className="type-cell">{t.type}</td>
+                <td className={isCredit(t.type) ? 'amount-credit' : 'amount-debit'}>
                   {isCredit(t.type) ? '+' : '-'} {Number(t.amount).toLocaleString()}
                 </td>
-                <td style={{ padding: '12px 15px' }}>
+                <td className="balance-cell">
                   {Number(t.balance_after).toLocaleString()}
                 </td>
-                <td style={{ padding: '12px 15px', color: '#888', fontSize: '13px' }}>
-                  {t.note || '-'}
-                </td>
+                <td className="note-cell">{t.note || '-'}</td>
               </tr>
             ))}
           </tbody>

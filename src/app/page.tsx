@@ -43,6 +43,8 @@ const stats = [
   { label: 'Destinations', value: 32, suffix: '+', decimals: 0 },
 ]
 
+const WHATSAPP_CHANNEL_LINK = 'https://whatsapp.com/channel/0029VbBt6L92f3EN00bRsK3M'
+
 const FAQS = [
   {
     q: 'How do I book a package?',
@@ -314,6 +316,25 @@ export default function HomePage() {
         .sf-contact p { color: #b7c6d4; font-size: 14px; line-height: 1.7; margin: 0 0 16px; }
         .sf-contact a { color: #b7c6d4; text-decoration: none; }
         .sf-contact a:hover { color: #4a9c7a; }
+
+        .sf-whatsapp {
+          max-width: 1200px; margin: 0 auto 44px; padding: 26px 28px; border-radius: 14px;
+          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+          display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;
+        }
+        .sf-whatsapp-left { display: flex; align-items: center; gap: 16px; max-width: 640px; }
+        .sf-whatsapp-icon {
+          width: 44px; height: 44px; border-radius: 50%; background: rgba(37, 211, 102, 0.15);
+          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .sf-whatsapp-text h4 { margin: 0 0 4px; color: #fff; font-size: 16px; font-weight: 800; }
+        .sf-whatsapp-text p { margin: 0; color: #8fa2b3; font-size: 13.5px; line-height: 1.6; }
+        .sf-whatsapp-btn {
+          padding: 13px 28px; background: #25D366; color: #06210f; border-radius: 8px;
+          text-decoration: none; font-weight: 800; font-size: 14px; white-space: nowrap;
+        }
+        .sf-whatsapp-btn:hover { background: #21bd5b; }
+
         .sf-bottom { max-width: 1200px; margin: 0 auto; border-top: 1px solid rgba(255,255,255,0.08); padding: 22px 0; text-align: center; }
         .sf-bottom p { margin: 0; color: #7188a0; font-size: 13px; }
         @media (max-width: 900px) {
@@ -549,6 +570,24 @@ export default function HomePage() {
               <a href="mailto:aimaconcerns@gmail.com">aimaconcerns@gmail.com</a>
             </p>
           </div>
+        </div>
+
+        <div className="sf-whatsapp">
+          <div className="sf-whatsapp-left">
+            <div className="sf-whatsapp-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#25D366" strokeWidth="1.8">
+                <path d="M20.5 3.5a10 10 0 0 0-16.7 10.9L2 21l6.8-1.8A10 10 0 1 0 20.5 3.5z" />
+                <path d="M8.5 8.5c.3 3 3 5.7 6 6l1-1.5c.2-.3.6-.4.9-.3l2 .8c.3.1.5.4.5.7 0 1.4-1.4 2.4-2.7 2.2-4.3-.6-7.6-3.9-8.2-8.2-.2-1.3.8-2.7 2.2-2.7.3 0 .6.2.7.5l.8 2c.1.3 0 .7-.3.9L8.5 8.5z" />
+              </svg>
+            </div>
+            <div className="sf-whatsapp-text">
+              <h4>WhatsApp Channel</h4>
+              <p>Subscribe to our WhatsApp Channel for the latest travel updates, Umrah offers, visa news, airline promotions, and exclusive deals.</p>
+            </div>
+          </div>
+          <a href={WHATSAPP_CHANNEL_LINK} target="_blank" rel="noopener noreferrer" className="sf-whatsapp-btn">
+            Subscribe Now
+          </a>
         </div>
 
         <div className="sf-bottom">

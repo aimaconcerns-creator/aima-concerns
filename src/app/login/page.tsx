@@ -37,25 +37,28 @@ export default function LoginPage() {
     const userId = data.user?.id
 
     if (userId) {
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('csp')
         .select('approval_status')
         .eq('id', userId)
         .single()
 
-      if (profile?.approval_status === 'Pending') {
+      if (profileError || !profile || profile.approval_status !== 'Approved') {
         await supabase.auth.signOut()
         setLoading(false)
-        setMessage('Your application is still pending approval. Please wait for an email confirmation before logging in.')
-        return
-      }
 
-      if (profile?.approval_status === 'Rejected') {
-        await supabase.auth.signOut()
-        setLoading(false)
-        setMessage('Your application was not approved. Please contact Aima Concerns for more information.')
+        if (profile?.approval_status === 'Rejected') {
+          setMessage('Your application was not approved. Please contact Aima Concerns for more information.')
+        } else {
+          setMessage('Your application is still pending approval. Please wait for an email confirmation before logging in.')
+        }
         return
       }
+    } else {
+      await supabase.auth.signOut()
+      setLoading(false)
+      setMessage('Something went wrong. Please try again.')
+      return
     }
 
     setLoading(false)

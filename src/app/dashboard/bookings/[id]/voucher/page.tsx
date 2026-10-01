@@ -49,7 +49,7 @@ export default async function VoucherPage({ params }: { params: Promise<{ id: st
   const h = await headers()
   const host = h.get('host')
   const proto = h.get('x-forwarded-proto') ?? 'http'
-  const verifyUrl = `${proto}://${host}/admin/verify/${b.reference}`
+  const verifyUrl = `${proto}://${host}/dashboard/bookings/${b.id}/voucher`
   const qr = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 220 })
 
   return (

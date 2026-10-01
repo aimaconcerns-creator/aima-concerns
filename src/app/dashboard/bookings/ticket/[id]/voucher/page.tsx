@@ -65,7 +65,7 @@ export default async function TicketVoucherPage({ params }: { params: Promise<{ 
   const h = await headers()
   const host = h.get('host')
   const proto = h.get('x-forwarded-proto') ?? 'http'
-  const verifyUrl = `${proto}://${host}/admin/verify/${b.reference}`
+  const verifyUrl = `${proto}://${host}/dashboard/bookings/ticket/${b.id}/voucher`
   const qr = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 220 })
 
   const Leg = ({ title, o, d, dep, arr, flight }: { title: string; o: string; d: string; dep: string; arr: string; flight?: string }) => (

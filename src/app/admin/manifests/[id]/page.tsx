@@ -60,73 +60,115 @@ export default async function ManifestPage({ params }: { params: Promise<{ id: s
   const adults = rows.length - infants
   const airline: any = Array.isArray(pkg.airlines) ? pkg.airlines[0] : pkg.airlines
 
-  const th = { padding: '10px 12px', color: '#155263', whiteSpace: 'nowrap' as const, fontSize: '13px' }
-  const td = { padding: '10px 12px', fontSize: '14px', whiteSpace: 'nowrap' as const }
-
-  const stat = (label: string, value: string | number) => (
-    <div style={{ backgroundColor: '#fff', borderRadius: '10px', padding: '16px 20px', boxShadow: '0 4px 15px rgba(0,0,0,0.06)', minWidth: '150px' }}>
-      <p style={{ margin: 0, color: '#888', fontSize: '12px' }}>{label}</p>
-      <p style={{ margin: '4px 0 0', color: '#155263', fontSize: '24px', fontWeight: 'bold' }}>{value}</p>
-    </div>
-  )
-
   return (
-    <div style={{ padding: '30px' }}>
-      <Link href="/admin/manifests" style={{ color: '#155263', fontSize: '14px' }}>
-        ← Back to Group Manifests
-      </Link>
+    <div style={{ padding: '34px' }}>
+      <style>{`
+        .back-link { color: #7d93a3; font-size: 13px; text-decoration: none; }
+        .back-link:hover { color: #cfe0ea; }
 
-      <h1 style={{ color: '#155263', margin: '10px 0 4px' }}>{pkg.name}</h1>
-      <p style={{ color: '#666', margin: '0 0 20px' }}>
+        .btn-export {
+          display: inline-block; padding: 11px 22px; background: rgba(217, 164, 65, 0.15); color: #e0c060;
+          border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 700; margin: 20px 0 26px;
+        }
+
+        .summary-grid {
+          display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px;
+          margin: 20px 0 28px;
+        }
+        .summary-card {
+          border-radius: 12px; padding: 18px; background: rgba(255,255,255,0.02);
+          border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+        }
+        .summary-label { color: #7d93a3; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin: 0; }
+        .summary-value { color: #fff; font-size: 26px; font-weight: 800; margin: 6px 0 0; }
+
+        .man-table-wrap {
+          border-radius: 14px; overflow: auto; border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.02); box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+        }
+        table.man-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        .man-table thead tr { background: rgba(255,255,255,0.03); text-align: left; }
+        .man-table th {
+          padding: 14px 16px; color: #7d93a3; font-size: 12px; text-transform: uppercase;
+          letter-spacing: 0.06em; font-weight: 700; white-space: nowrap;
+        }
+        .man-table td {
+          padding: 14px 16px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 13.5px;
+          color: #cfe0ea; white-space: nowrap;
+        }
+        .ref { font-weight: 700; color: #e0c060; }
+        .passenger { font-weight: 700; color: #cfe0ea; }
+      `}</style>
+
+      <Link href="/admin/manifests" className="back-link">← Back to Group Manifests</Link>
+
+      <h1 style={{ color: '#fff', margin: '14px 0 4px', fontSize: '22px', fontWeight: 800 }}>
+        {pkg.name}
+      </h1>
+      <p style={{ color: '#7d93a3', fontSize: '14px', margin: 0 }}>
         {pkg.package_type} · {pkg.days} days · Departs {fmt(pkg.departure_date)}
         {airline?.name ? ` · ${airline.name}` : ''}
       </p>
 
-      <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '24px' }}>
-        {stat('Total passengers', rows.length)}
-        {stat('Adults', adults)}
-        {stat('Infants', infants)}
-        {stat('Seats on hold (unpaid)', heldSeats)}
+      <a href={`/admin/manifests/${id}/export`} className="btn-export">
+        Export to Excel
+      </a>
+
+      <div className="summary-grid">
+        <div className="summary-card">
+          <p className="summary-label">Total Passengers</p>
+          <p className="summary-value">{rows.length}</p>
+        </div>
+        <div className="summary-card">
+          <p className="summary-label">Adults</p>
+          <p className="summary-value">{adults}</p>
+        </div>
+        <div className="summary-card">
+          <p className="summary-label">Infants</p>
+          <p className="summary-value">{infants}</p>
+        </div>
+        <div className="summary-card">
+          <p className="summary-label">Seats on Hold (Unpaid)</p>
+          <p className="summary-value">{heldSeats}</p>
+        </div>
       </div>
 
-      <div style={{ backgroundColor: '#fff', borderRadius: '10px', overflow: 'auto', boxShadow: '0 4px 15px rgba(0,0,0,0.06)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
+      <div className="man-table-wrap">
+        <table className="man-table">
           <thead>
-            <tr style={{ backgroundColor: '#f0f3f4', textAlign: 'left' }}>
-              <th style={th}>#</th>
-              <th style={th}>Booking Ref</th>
-              <th style={th}>Passenger</th>
-              <th style={th}>Date of Birth</th>
-              <th style={th}>Nationality</th>
-              <th style={th}>Passport No.</th>
-              <th style={th}>Issued</th>
-              <th style={th}>Expires</th>
-              <th style={th}>Remarks</th>
-              <th style={th}>Booked By</th>
+            <tr>
+              <th>#</th>
+              <th>Booking Ref</th>
+              <th>Passenger</th>
+              <th>Date of Birth</th>
+              <th>Nationality</th>
+              <th>Passport No.</th>
+              <th>Issued</th>
+              <th>Expires</th>
+              <th>Remarks</th>
+              <th>Booked By</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={10} style={{ padding: '30px', textAlign: 'center', color: '#888' }}>
+                <td colSpan={10} style={{ padding: '24px', textAlign: 'center', color: '#5a7184' }}>
                   No paid passengers on this manifest yet.
                 </td>
               </tr>
             )}
             {rows.map((r, i) => (
-              <tr key={r.id} style={{ borderTop: '1px solid #eee' }}>
-                <td style={td}>{i + 1}</td>
-                <td style={{ ...td, fontWeight: 800, color: '#155263', letterSpacing: '1px' }}>{r.reference}</td>
-                <td style={{ ...td, fontWeight: 'bold', color: '#155263' }}>
-                  {r.title} {r.given_name} {r.surname}
-                </td>
-                <td style={td}>{fmt(r.date_of_birth)}</td>
-                <td style={td}>{r.nationality}</td>
-                <td style={td}>{r.passport_number}</td>
-                <td style={td}>{fmt(r.passport_issue_date)}</td>
-                <td style={td}>{fmt(r.passport_expiry_date)}</td>
-                <td style={{ ...td, whiteSpace: 'normal', minWidth: '140px' }}>{r.remarks || '—'}</td>
-                <td style={td}>{r.bookedBy}</td>
+              <tr key={r.id}>
+                <td>{i + 1}</td>
+                <td className="ref">{r.reference}</td>
+                <td className="passenger">{r.title} {r.given_name} {r.surname}</td>
+                <td>{fmt(r.date_of_birth)}</td>
+                <td>{r.nationality}</td>
+                <td>{r.passport_number}</td>
+                <td>{fmt(r.passport_issue_date)}</td>
+                <td>{fmt(r.passport_expiry_date)}</td>
+                <td style={{ whiteSpace: 'normal', minWidth: '140px', color: '#7d93a3' }}>{r.remarks || '—'}</td>
+                <td>{r.bookedBy}</td>
               </tr>
             ))}
           </tbody>

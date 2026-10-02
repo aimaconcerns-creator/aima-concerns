@@ -41,96 +41,72 @@ export default async function AdminApprovalsPage() {
     .order('created_at', { ascending: false })
 
   return (
-    <div style={{ padding: '30px' }}>
-      <h1 style={{ color: '#155263', marginBottom: '20px' }}>Pending Approvals</h1>
+    <div style={{ padding: '34px' }}>
+      <style>{`
+        .approval-card {
+          border-radius: 14px; padding: 22px; margin-bottom: 16px;
+          background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+        }
+        .ac-top { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; }
+        .ac-name { margin: 0; font-weight: 800; color: #cfe0ea; font-size: 16px; }
+        .ac-meta { margin: 4px 0 0; color: #7d93a3; font-size: 13px; }
+        .ac-actions { display: flex; gap: 8px; }
+        .btn-approve {
+          padding: 9px 18px; background: rgba(95, 224, 160, 0.15); color: #5FE0A0;
+          border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
+        }
+        .btn-reject {
+          padding: 9px 18px; background: rgba(217, 83, 79, 0.15); color: #ff8f8a;
+          border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
+        }
+        .ac-details {
+          margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.08);
+          display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;
+          font-size: 13px; color: #a9bccb;
+        }
+        .ac-details p { margin: 0; }
+        .ac-details strong { color: #7d93a3; font-weight: 700; }
+      `}</style>
+
+      <h1 style={{ color: '#fff', margin: '0 0 24px', fontSize: '22px', fontWeight: 800 }}>
+        Pending Approvals
+      </h1>
 
       {(!pendingCustomers || pendingCustomers.length === 0) && (
-        <p style={{ color: '#888' }}>No pending applications right now.</p>
+        <p style={{ color: '#5a7184' }}>No pending applications right now.</p>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        {pendingCustomers?.map((c: any) => (
-          <div
-            key={c.id}
-            style={{
-              backgroundColor: '#fff',
-              borderRadius: '10px',
-              padding: '20px',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.06)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '15px' }}>
-              <div>
-                <p style={{ margin: 0, fontWeight: 'bold', color: '#155263', fontSize: '16px' }}>
-                  {c['Full Name:']}
-                </p>
-                <p style={{ margin: '4px 0 0', color: '#888', fontSize: '13px' }}>
-                  {c['Email']} · {c['Phone']}
-                </p>
-              </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <form action={approveCustomer}>
-                  <input type="hidden" name="customerId" value={c.id} />
-                  <button
-                    type="submit"
-                    style={{
-                      padding: '8px 18px',
-                      backgroundColor: '#5FAE8C',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    Approve
-                  </button>
-                </form>
-                <form action={rejectCustomer}>
-                  <input type="hidden" name="customerId" value={c.id} />
-                  <button
-                    type="submit"
-                    style={{
-                      padding: '8px 18px',
-                      backgroundColor: '#d9534f',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    Reject
-                  </button>
-                </form>
-              </div>
+      {pendingCustomers?.map((c: any) => (
+        <div key={c.id} className="approval-card">
+          <div className="ac-top">
+            <div>
+              <p className="ac-name">{c['Full Name:']}</p>
+              <p className="ac-meta">{c['Email']} · {c['Phone']}</p>
             </div>
-
-            <div
-              style={{
-                marginTop: '15px',
-                paddingTop: '15px',
-                borderTop: '1px solid #eee',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                gap: '10px',
-                fontSize: '13px',
-                color: '#555',
-              }}
-            >
-              <p style={{ margin: 0 }}><strong>CNIC:</strong> {c['CNIC']}</p>
-              <p style={{ margin: 0 }}><strong>DOB:</strong> {c['Date of Birth']}</p>
-              <p style={{ margin: 0 }}><strong>Nationality:</strong> {c['Nationality']}</p>
-              <p style={{ margin: 0 }}><strong>Gender:</strong> {c['Gender']}</p>
-              <p style={{ margin: 0 }}><strong>Address:</strong> {c['Address']}</p>
-              <p style={{ margin: 0 }}><strong>Passport No:</strong> {c['Passport No.']}</p>
-              <p style={{ margin: 0 }}><strong>Passport Expiry:</strong> {c['Passport Expiry Date']}</p>
+            <div className="ac-actions">
+              <form action={approveCustomer}>
+                <input type="hidden" name="customerId" value={c.id} />
+                <button type="submit" className="btn-approve">Approve</button>
+              </form>
+              <form action={rejectCustomer}>
+                <input type="hidden" name="customerId" value={c.id} />
+                <button type="submit" className="btn-reject">Reject</button>
+              </form>
             </div>
           </div>
-        ))}
-      </div>
+
+          <div className="ac-details">
+            <p><strong>CNIC:</strong> {c['CNIC']}</p>
+            <p><strong>DOB:</strong> {c['Date of Birth']}</p>
+            <p><strong>Nationality:</strong> {c['Nationality']}</p>
+            <p><strong>Gender:</strong> {c['Gender']}</p>
+            <p><strong>Address:</strong> {c['Address']}</p>
+            <p><strong>Passport No:</strong> {c['Passport No.']}</p>
+            <p><strong>Passport Expiry:</strong> {c['Passport Expiry Date']}</p>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

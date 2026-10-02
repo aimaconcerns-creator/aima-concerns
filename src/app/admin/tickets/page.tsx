@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
 import DeleteTicketButton from './DeleteTicketButton'
@@ -126,7 +127,7 @@ export default async function AdminTicketsPage() {
           border-radius: 14px; overflow: auto; border: 1px solid rgba(255,255,255,0.08);
           background: rgba(255,255,255,0.02); box-shadow: 0 8px 24px rgba(0,0,0,0.35);
         }
-        table.tix-table { width: 100%; border-collapse: collapse; min-width: 980px; }
+        table.tix-table { width: 100%; border-collapse: collapse; min-width: 1080px; }
         .tix-table thead tr { background: rgba(255,255,255,0.03); text-align: left; }
         .tix-table th {
           padding: 14px 16px; color: #7d93a3; font-size: 12px; text-transform: uppercase;
@@ -146,6 +147,10 @@ export default async function AdminTicketsPage() {
           border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 700;
         }
         .btn-visibility { padding: 5px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 700; }
+        .btn-edit {
+          padding: 6px 14px; background: rgba(217, 164, 65, 0.18); color: #d9a441;
+          border-radius: 6px; text-decoration: none; font-size: 12.5px; font-weight: 700; display: inline-block;
+        }
         .btn-delete {
           padding: 6px 14px; background: rgba(217, 83, 79, 0.18); color: #ff8f8a;
           border: none; border-radius: 6px; cursor: pointer; font-size: 12.5px; font-weight: 700;
@@ -268,6 +273,7 @@ export default async function AdminTicketsPage() {
               <th>Seats</th>
               <th>Status</th>
               <th>Visibility</th>
+              <th>Edit</th>
               <th>Delete</th>
             </tr>
           </thead>
@@ -316,6 +322,11 @@ export default async function AdminTicketsPage() {
                         {t.is_hidden ? 'Hidden' : 'Visible'}
                       </button>
                     </form>
+                  </td>
+                  <td>
+                    <Link href={`/admin/tickets/${t.id}/edit`} className="btn-edit">
+                      Edit
+                    </Link>
                   </td>
                   <td>
                     {canDelete ? (

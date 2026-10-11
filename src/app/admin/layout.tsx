@@ -86,6 +86,12 @@ export default async function AdminLayout({
             #0f141b;
           min-height: 100vh; color: #e6edf3;
         }
+
+        @media print {
+          .sidebar { display: none !important; }
+          .admin-shell { display: block !important; background: #fff !important; }
+          .main-area { background: #fff !important; min-height: auto !important; }
+        }
       `}</style>
 
       <div className="sidebar">

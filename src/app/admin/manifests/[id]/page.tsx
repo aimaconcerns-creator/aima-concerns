@@ -107,11 +107,20 @@ export default async function ManifestPage({ params }: { params: Promise<{ id: s
         .passenger { font-weight: 700; color: #cfe0ea; }
 
         @media print {
-          .back-link, .btn-export, .btn-print { display: none; }
-          body, .man-table-wrap, .summary-card { background: #fff !important; color: #000 !important; border-color: #ccc !important; }
-          .man-table td, .man-table th { color: #000 !important; }
-          .ref, .passenger { color: #000 !important; }
-          .summary-value, .summary-label { color: #000 !important; }
+          .back-link, .btn-export, .btn-print, .summary-grid { display: none !important; }
+          body { background: #fff !important; }
+          .man-table-wrap {
+            background: #fff !important; box-shadow: none !important; border: none !important;
+            overflow: visible !important;
+          }
+          table.man-table { min-width: 0 !important; width: 100% !important; }
+          .man-table th, .man-table td {
+            border: 1px solid #000 !important; color: #000 !important; white-space: normal !important;
+            font-size: 11px !important; padding: 6px 8px !important;
+          }
+          .man-table thead tr { background: #e8e8e8 !important; }
+          .man-table th { font-weight: 800 !important; }
+          .ref, .passenger { color: #000 !important; font-weight: 700 !important; }
         }
       `}</style>
 

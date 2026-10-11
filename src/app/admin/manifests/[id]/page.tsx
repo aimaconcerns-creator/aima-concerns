@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
+import PrintManifestButton from './PrintManifestButton'
 
 const fmt = (d: string) =>
   new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -68,7 +69,13 @@ export default async function ManifestPage({ params }: { params: Promise<{ id: s
 
         .btn-export {
           display: inline-block; padding: 11px 22px; background: rgba(217, 164, 65, 0.15); color: #e0c060;
-          border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 700; margin: 20px 0 26px;
+          border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 700; margin: 20px 10px 26px 0;
+        }
+
+        .btn-print {
+          display: inline-block; padding: 11px 22px; background: rgba(255,255,255,0.06); color: #cfe0ea;
+          border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; font-size: 14px; font-weight: 700;
+          cursor: pointer; margin: 20px 0 26px;
         }
 
         .summary-grid {
@@ -98,6 +105,14 @@ export default async function ManifestPage({ params }: { params: Promise<{ id: s
         }
         .ref { font-weight: 700; color: #e0c060; }
         .passenger { font-weight: 700; color: #cfe0ea; }
+
+        @media print {
+          .back-link, .btn-export, .btn-print { display: none; }
+          body, .man-table-wrap, .summary-card { background: #fff !important; color: #000 !important; border-color: #ccc !important; }
+          .man-table td, .man-table th { color: #000 !important; }
+          .ref, .passenger { color: #000 !important; }
+          .summary-value, .summary-label { color: #000 !important; }
+        }
       `}</style>
 
       <Link href="/admin/manifests" className="back-link">← Back to Group Manifests</Link>
@@ -113,6 +128,7 @@ export default async function ManifestPage({ params }: { params: Promise<{ id: s
       <a href={`/admin/manifests/${id}/export`} className="btn-export">
         Export to Excel
       </a>
+      <PrintManifestButton />
 
       <div className="summary-grid">
         <div className="summary-card">

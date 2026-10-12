@@ -24,8 +24,6 @@ async function deletePackage(formData: FormData) {
   const id = formData.get('id') as string
   const supabase = await createClient()
 
-  // Safety check: never delete a package that has any bookings, even if the
-  // button shouldn't have been clickable in that case.
   const { count } = await supabase
     .from('bookings')
     .select('*', { count: 'exact', head: true })
@@ -58,69 +56,84 @@ export default async function AdminPackagesPage() {
   }
 
   const statusColor = (status: string) => {
-    if (status === 'Booking Open') return '#5FAE8C'
-    if (status === 'Sold Out') return '#d9534f'
-    if (status === 'Booking Closed') return '#e0a030'
-    return '#888'
+    if (status === 'Booking Open') return '#5FE0A0'
+    if (status === 'Sold Out') return '#ff8f8a'
+    if (status === 'Booking Closed') return '#e0c060'
+    return '#7d93a3'
   }
 
-  const th = { padding: '12px 15px', color: '#155263' }
-  const td = { padding: '12px 15px' }
-
   return (
-    <div style={{ padding: '30px' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px',
-          flexWrap: 'wrap',
-          gap: '12px',
-        }}
-      >
-        <h1 style={{ color: '#155263', margin: 0 }}>Packages</h1>
-        <Link
-          href="/admin/packages/new"
-          style={{
-            padding: '11px 22px',
-            backgroundColor: '#5FAE8C',
-            color: '#fff',
-            borderRadius: '6px',
-            textDecoration: 'none',
-            fontWeight: 'bold',
-            fontSize: '14px',
-          }}
-        >
+    <div style={{ padding: '34px' }}>
+      <style>{`
+        .pkg-header {
+          display: flex; justify-content: space-between; align-items: center;
+          margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+        }
+        .btn-new {
+          padding: 12px 22px; background: #4a9c7a; color: #fff; border-radius: 8px;
+          text-decoration: none; font-weight: 700; font-size: 14px;
+        }
+        .btn-new:hover { background: #3f8b6c; }
+
+        .pkg-table-wrap {
+          border-radius: 14px; overflow: auto; border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.02); box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+        }
+        table.pkg-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        .pkg-table thead tr { background: rgba(255,255,255,0.03); text-align: left; }
+        .pkg-table th {
+          padding: 14px 16px; color: #7d93a3; font-size: 12px; text-transform: uppercase;
+          letter-spacing: 0.06em; font-weight: 700;
+        }
+        .pkg-table td { padding: 16px; border-top: 1px solid rgba(255,255,255,0.06); }
+        .pkg-row-hidden { opacity: 0.5; }
+        .pkg-name { font-weight: 800; color: #cfe0ea; font-size: 14px; }
+        .pkg-days { font-size: 12px; color: #7d93a3; margin-top: 2px; }
+        .cell { color: #a9bccb; font-size: 13.5px; }
+        .price-cell { color: #fff; font-weight: 700; font-size: 14px; }
+
+        .actions-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .btn-edit {
+          padding: 6px 14px; background: rgba(47, 127, 122, 0.2); color: #6fd0c8;
+          border-radius: 6px; text-decoration: none; font-size: 12.5px; font-weight: 700;
+        }
+        .btn-toggle {
+          padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer;
+          font-size: 12.5px; font-weight: 700;
+        }
+        .delete-disabled {
+          padding: 6px 14px; background: rgba(255,255,255,0.03); color: #4a5a68;
+          border-radius: 6px; font-size: 12.5px; cursor: not-allowed; display: inline-block;
+        }
+      `}</style>
+
+      <div className="pkg-header">
+        <h1 style={{ color: '#fff', margin: 0, fontSize: '22px', fontWeight: 800 }}>
+          Packages
+        </h1>
+        <Link href="/admin/packages/new" className="btn-new">
           + New Package
         </Link>
       </div>
 
-      <div
-        style={{
-          backgroundColor: '#fff',
-          borderRadius: '10px',
-          overflow: 'auto',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.06)',
-        }}
-      >
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '820px' }}>
+      <div className="pkg-table-wrap">
+        <table className="pkg-table">
           <thead>
-            <tr style={{ backgroundColor: '#f0f3f4', textAlign: 'left' }}>
-              <th style={th}>Package</th>
-              <th style={th}>Type</th>
-              <th style={th}>Departure</th>
-              <th style={th}>Price</th>
-              <th style={th}>Seats</th>
-              <th style={th}>Status</th>
-              <th style={th}>Visibility</th>
-              <th style={th}>Actions</th>
+            <tr>
+              <th>Package</th>
+              <th>Type</th>
+              <th>Departure</th>
+              <th>Price</th>
+              <th>Seats</th>
+              <th>Status</th>
+              <th>Visibility</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {(!packages || packages.length === 0) && (
               <tr>
-                <td colSpan={8} style={{ padding: '30px', textAlign: 'center', color: '#888' }}>
+                <td colSpan={8} style={{ padding: '30px', textAlign: 'center', color: '#5a7184' }}>
                   No packages yet. Click &quot;+ New Package&quot; to create one.
                 </td>
               </tr>
@@ -131,38 +144,28 @@ export default async function AdminPackagesPage() {
               const canDelete = bookingCount === 0
 
               return (
-                <tr key={p.id} style={{ borderTop: '1px solid #eee', opacity: p.is_hidden ? 0.55 : 1 }}>
-                  <td style={{ ...td, fontWeight: 'bold', color: '#155263' }}>
-                    {p.name}
-                    <div style={{ fontSize: '12px', color: '#888', fontWeight: 'normal' }}>{p.days} days</div>
+                <tr key={p.id} className={p.is_hidden ? 'pkg-row-hidden' : ''}>
+                  <td>
+                    <div className="pkg-name">{p.name}</div>
+                    <div className="pkg-days">{p.days} days</div>
                   </td>
-                  <td style={td}>{p.package_type}</td>
-                  <td style={td}>
+                  <td className="cell">{p.package_type}</td>
+                  <td className="cell">
                     {new Date(p.departure_date).toLocaleDateString('en-GB', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
+                      day: 'numeric', month: 'short', year: 'numeric',
                     })}
                   </td>
-                  <td style={td}>PKR {Number(p.price).toLocaleString()}</td>
-                  <td style={td}>{p.available_seats}</td>
-                  <td style={td}>
-                    <span style={{ color: statusColor(p.status), fontWeight: 'bold' }}>{p.status}</span>
+                  <td className="price-cell">PKR {Number(p.price).toLocaleString()}</td>
+                  <td className="cell">{p.available_seats}</td>
+                  <td>
+                    <span style={{ color: statusColor(p.status), fontWeight: 700, fontSize: '13.5px' }}>
+                      {p.status}
+                    </span>
                   </td>
-                  <td style={td}>{p.is_hidden ? 'Hidden' : 'Visible'}</td>
-                  <td style={td}>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                      <Link
-                        href={`/admin/packages/${p.id}/edit`}
-                        style={{
-                          padding: '6px 14px',
-                          backgroundColor: '#155263',
-                          color: '#fff',
-                          borderRadius: '6px',
-                          textDecoration: 'none',
-                          fontSize: '13px',
-                        }}
-                      >
+                  <td className="cell">{p.is_hidden ? 'Hidden' : 'Visible'}</td>
+                  <td>
+                    <div className="actions-row">
+                      <Link href={`/admin/packages/${p.id}/edit`} className="btn-edit">
                         Edit
                       </Link>
                       <form action={toggleHidden}>
@@ -170,14 +173,10 @@ export default async function AdminPackagesPage() {
                         <input type="hidden" name="hide" value={p.is_hidden ? 'false' : 'true'} />
                         <button
                           type="submit"
+                          className="btn-toggle"
                           style={{
-                            padding: '6px 14px',
-                            backgroundColor: '#e8edef',
-                            color: '#155263',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '13px',
+                            background: p.is_hidden ? 'rgba(95, 224, 160, 0.18)' : 'rgba(255,255,255,0.06)',
+                            color: p.is_hidden ? '#5FE0A0' : '#cfe0ea',
                           }}
                         >
                           {p.is_hidden ? 'Show' : 'Hide'}
@@ -188,14 +187,7 @@ export default async function AdminPackagesPage() {
                       ) : (
                         <span
                           title={`Cannot delete — ${bookingCount} booking(s) exist for this package`}
-                          style={{
-                            padding: '6px 14px',
-                            backgroundColor: '#f0f0f0',
-                            color: '#aaa',
-                            borderRadius: '6px',
-                            fontSize: '13px',
-                            cursor: 'not-allowed',
-                          }}
+                          className="delete-disabled"
                         >
                           Delete
                         </span>

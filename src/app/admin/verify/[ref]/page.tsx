@@ -68,6 +68,19 @@ export default async function VerifyBookingPage({ params }: { params: Promise<{ 
   const airline: any = t ? (Array.isArray(t.airlines) ? t.airlines[0] : t.airlines) : null
   const passengers: any[] = isTicket ? (b.ticket_booking_passengers ?? []) : (b.booking_passengers ?? [])
 
+  const voucherHref = isTicket
+    ? `/dashboard/bookings/ticket/${b.id}/voucher`
+    : `/dashboard/bookings/${b.id}/voucher`
+
+  const btnStyle = {
+    display: 'inline-block',
+    padding: '10px 20px',
+    borderRadius: '6px',
+    textDecoration: 'none',
+    fontWeight: 'bold' as const,
+    fontSize: '14px',
+  }
+
   return (
     <div style={{ padding: '30px' }}>
       <div style={card}>
@@ -95,6 +108,23 @@ export default async function VerifyBookingPage({ params }: { params: Promise<{ 
             Contact phone: <b style={{ color: '#155263' }}>{b.phone_number}</b>
           </p>
         )}
+
+        <div style={{ display: 'flex', gap: '10px', marginTop: '16px', flexWrap: 'wrap' }}>
+          <Link
+            href={`/admin/customers/${b.customer_id}`}
+            style={{ ...btnStyle, backgroundColor: '#155263', color: '#fff' }}
+          >
+            View Customer
+          </Link>
+          {paid && (
+            <Link
+              href={voucherHref}
+              style={{ ...btnStyle, backgroundColor: '#5FAE8C', color: '#fff' }}
+            >
+              Download Voucher/Ticket
+            </Link>
+          )}
+        </div>
 
         <div style={{ margin: '20px 0', padding: '16px', backgroundColor: '#f5f7f8', borderRadius: '8px' }}>
           {isTicket ? (

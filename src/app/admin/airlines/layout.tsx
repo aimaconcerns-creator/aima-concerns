@@ -18,6 +18,7 @@ export default function AirlinesLayout({
   return (
     <div style={{ display: 'flex' }}>
       <div
+        className="airlines-subnav no-print"
         style={{
           width: '200px',
           backgroundColor: '#fff',

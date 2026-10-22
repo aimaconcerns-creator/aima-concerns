@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
 import DeleteTicketButton from './DeleteTicketButton'
+import { AirportSelect } from './airports'
+import { TicketTypeProvider, TicketTypeSelect, ReturnSection, MultiCitySection } from './[id]/edit/TripType'
 
 async function addTicket(formData: FormData) {
   'use server'
@@ -25,6 +27,19 @@ async function addTicket(formData: FormData) {
   const availableSeats = Number(formData.get('available_seats'))
   const notes = formData.get('notes') as string
 
+  let segments: any[] | null = null
+  if (ticketType === 'Multi City') {
+    try {
+      const parsed = JSON.parse((formData.get('segments') as string) || '[]')
+      segments = Array.isArray(parsed) ? parsed : []
+    } catch {
+      segments = []
+    }
+    if (segments.length === 0) {
+      throw new Error('Add at least one additional leg for a Multi City ticket')
+    }
+  }
+
   const { error } = await supabase.from('tickets').insert({
     ticket_type: ticketType,
     airline_id: airlineId || null,
@@ -44,6 +59,7 @@ async function addTicket(formData: FormData) {
     status: 'Booking Open',
     is_hidden: false,
     notes,
+    segments: ticketType === 'Multi City' ? segments : null,
   })
 
   if (error) {
@@ -118,6 +134,7 @@ export default async function AdminTicketsPage() {
           box-sizing: border-box;
         }
         .field-input::placeholder { color: #5a7184; }
+        .section-title { color: #d9a441; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; margin: 10px 0 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); }
         .btn-submit {
           padding: 11px 26px; background: #4a9c7a; color: #fff; border: none; border-radius: 7px;
           cursor: pointer; font-weight: 700; margin-top: 6px;
@@ -168,13 +185,11 @@ export default async function AdminTicketsPage() {
       <div className="form-card">
         <h3>Add New Ticket</h3>
         <form action={addTicket}>
+          <TicketTypeProvider defaultType="One Way">
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
             <div className="field-wrap">
               <label className="field-label">Ticket Type</label>
-              <select name="ticket_type" required className="field-input">
-                <option value="One Way">One Way</option>
-                <option value="Return">Return</option>
-              </select>
+              <TicketTypeSelect />
             </div>
 
             <div className="field-wrap">
@@ -189,12 +204,12 @@ export default async function AdminTicketsPage() {
 
             <div className="field-wrap">
               <label className="field-label">Origin</label>
-              <input type="text" name="origin" required className="field-input" />
+              <AirportSelect name="origin" defaultValue="" />
             </div>
 
             <div className="field-wrap">
               <label className="field-label">Destination</label>
-              <input type="text" name="destination" required className="field-input" />
+              <AirportSelect name="destination" defaultValue="" />
             </div>
 
             <div className="field-wrap">
@@ -212,19 +227,9 @@ export default async function AdminTicketsPage() {
               <input type="datetime-local" name="arrival_datetime" required className="field-input" />
             </div>
 
-            <div className="field-wrap">
-              <label className="field-label">Return Flight Number (if Return)</label>
-              <input type="text" name="return_flight_number" className="field-input" />
-            </div>
-
-            <div className="field-wrap">
-              <label className="field-label">Return Departure (if Return)</label>
-              <input type="datetime-local" name="return_departure_datetime" className="field-input" />
-            </div>
-
-            <div className="field-wrap">
-              <label className="field-label">Return Arrival (if Return)</label>
-              <input type="datetime-local" name="return_arrival_datetime" className="field-input" />
+            <div style={{ flex: '1 1 100%' }}>
+              <ReturnSection flightNumber="" departure="" arrival="" />
+              <MultiCitySection defaultSegments={[]} />
             </div>
 
             <div className="field-wrap">
@@ -259,6 +264,7 @@ export default async function AdminTicketsPage() {
           </div>
 
           <button type="submit" className="btn-submit">Add Ticket</button>
+          </TicketTypeProvider>
         </form>
       </div>
 

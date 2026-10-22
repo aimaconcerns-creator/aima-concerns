@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
+import { TicketTypeProvider, TicketTypeSelect, ReturnSection, MultiCitySection } from './TripType'
+import { AirportSelect } from '../../airports'
 
 const STATUSES = ['Booking Open', 'Sold Out', 'Booking Closed', 'Departed']
 
@@ -30,6 +32,19 @@ async function updateTicket(formData: FormData) {
   const isHidden = formData.get('is_hidden') === 'on'
   const notes = formData.get('notes') as string
 
+  let segments: any[] | null = null
+  if (ticketType === 'Multi City') {
+    try {
+      const parsed = JSON.parse((formData.get('segments') as string) || '[]')
+      segments = Array.isArray(parsed) ? parsed : []
+    } catch {
+      segments = []
+    }
+    if (segments.length === 0) {
+      redirect(`/admin/tickets/${id}/edit?error=` + encodeURIComponent('Add at least one additional leg for a Multi City ticket'))
+    }
+  }
+
   const { error } = await supabase
     .from('tickets')
     .update({
@@ -51,6 +66,7 @@ async function updateTicket(formData: FormData) {
       status,
       is_hidden: isHidden,
       notes,
+      segments: ticketType === 'Multi City' ? segments : null,
     })
     .eq('id', id)
 
@@ -116,15 +132,13 @@ export default async function EditTicketPage({
       <div className="form-card">
         <form action={updateTicket}>
           <input type="hidden" name="id" value={ticket.id} />
+          <TicketTypeProvider defaultType={ticket.ticket_type}>
 
           <div className="section-title">Flight Details</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
             <div className="field-wrap">
               <label className="field-label">Ticket Type</label>
-              <select name="ticket_type" required defaultValue={ticket.ticket_type} className="field-input">
-                <option value="One Way">One Way</option>
-                <option value="Return">Return</option>
-              </select>
+              <TicketTypeSelect />
             </div>
 
             <div className="field-wrap">
@@ -139,12 +153,12 @@ export default async function EditTicketPage({
 
             <div className="field-wrap">
               <label className="field-label">Origin</label>
-              <input type="text" name="origin" required defaultValue={ticket.origin} className="field-input" />
+              <AirportSelect name="origin" defaultValue={ticket.origin} />
             </div>
 
             <div className="field-wrap">
               <label className="field-label">Destination</label>
-              <input type="text" name="destination" required defaultValue={ticket.destination} className="field-input" />
+              <AirportSelect name="destination" defaultValue={ticket.destination} />
             </div>
 
             <div className="field-wrap">
@@ -180,31 +194,14 @@ export default async function EditTicketPage({
             </div>
           </div>
 
-          <div className="section-title">Return Flight (only if Ticket Type is Return)</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
-            <div className="field-wrap">
-              <label className="field-label">Return Flight Number</label>
-              <input type="text" name="return_flight_number" defaultValue={ticket.return_flight_number ?? ''} className="field-input" />
-            </div>
-            <div className="field-wrap">
-              <label className="field-label">Return Departure</label>
-              <input
-                type="datetime-local"
-                name="return_departure_datetime"
-                defaultValue={toLocalInput(ticket.return_departure_datetime)}
-                className="field-input"
-              />
-            </div>
-            <div className="field-wrap">
-              <label className="field-label">Return Arrival</label>
-              <input
-                type="datetime-local"
-                name="return_arrival_datetime"
-                defaultValue={toLocalInput(ticket.return_arrival_datetime)}
-                className="field-input"
-              />
-            </div>
-          </div>
+          <ReturnSection
+            flightNumber={ticket.return_flight_number ?? ''}
+            departure={toLocalInput(ticket.return_departure_datetime)}
+            arrival={toLocalInput(ticket.return_arrival_datetime)}
+          />
+
+          <MultiCitySection defaultSegments={ticket.segments ?? []} />
+
 
           <div className="section-title">Pricing &amp; Seats</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
@@ -253,6 +250,7 @@ export default async function EditTicketPage({
           )}
 
           <button type="submit" className="btn-submit">Save Changes</button>
+          </TicketTypeProvider>
         </form>
       </div>
     </div>

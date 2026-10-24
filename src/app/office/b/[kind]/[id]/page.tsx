@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
-import { Badge, customerMap, fmt, officeCss, paidOf, payLabel, pkt } from '../../lib'
+import { Badge, customerMap, fmt, officeCss, paidOf, payLabel, pkt } from '@/app/office/lib'
 import BookingActions from './BookingActions'
 
 function describe(l: any): string {

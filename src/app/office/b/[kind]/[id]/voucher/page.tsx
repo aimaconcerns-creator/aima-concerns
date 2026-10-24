@@ -2,8 +2,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import QRCode from 'qrcode'
 import { createClient } from '@/utils/supabase/server'
-import { customerMap, fmt, officeCss, paidOf, pkt } from '../../../lib'
-import PrintButton from '../../../PrintButton'
+import { customerMap, fmt, officeCss, paidOf, pkt } from '@/app/office/lib'
+import PrintButton from '@/app/office/PrintButton'
 
 export default async function OfficeVoucher({
   params,

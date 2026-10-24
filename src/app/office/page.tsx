@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
 
@@ -7,7 +8,7 @@ export default async function OfficeHome() {
   const { data: staff } = await supabase
     .from('staff')
     .select('full_name')
-    .eq('id', user!.id)
+    .eq('id', (user ?? redirect('/admin-login')).id)
     .single()
 
   const today = new Date().toLocaleDateString('en-GB', {

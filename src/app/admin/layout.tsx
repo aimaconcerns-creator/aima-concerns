@@ -25,6 +25,10 @@ export default async function AdminLayout({
     redirect('/dashboard')
   }
 
+  if (staff.role !== 'Super Admin') {
+    redirect('/office')
+  }
+
   const navItems = [
     { href: '/admin', label: 'Dashboard' },
     { href: '/admin/approvals', label: 'Pending Approvals' },
@@ -34,6 +38,7 @@ export default async function AdminLayout({
     { href: '/admin/packages', label: 'Packages' },
     { href: '/admin/tickets', label: 'Manage Tickets' },
     { href: '/admin/manifests', label: 'Group Manifests' },
+    { href: '/office/ledgers', label: 'Group Ledgers' },
     { href: '/admin/airlines', label: 'Manage Airlines' },
   ]
 

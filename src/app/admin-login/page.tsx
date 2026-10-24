@@ -30,6 +30,7 @@ export default function AdminLoginPage() {
     }
 
     const userId = data.user?.id
+    let destination = '/admin'
 
     if (userId) {
       const { data: staff } = await supabase
@@ -44,10 +45,14 @@ export default function AdminLoginPage() {
         setMessage('This account does not have admin access.')
         return
       }
+
+      if (staff.role === 'Office') {
+        destination = '/office'
+      }
     }
 
     setLoading(false)
-    router.push('/admin')
+    router.push(destination)
   }
 
   return (

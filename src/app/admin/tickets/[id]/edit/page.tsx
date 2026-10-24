@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
 import { TicketTypeProvider, TicketTypeSelect, ReturnSection, MultiCitySection } from './TripType'
 import { AirportSelect } from '../../airports'
+import DurationPreview from '../DurationPreview'
 
 const STATUSES = ['Booking Open', 'Sold Out', 'Booking Closed', 'Departed']
 
@@ -193,6 +194,8 @@ export default async function EditTicketPage({
               <input type="text" name="baggage_allowance" placeholder="e.g. 30kg" defaultValue={ticket.baggage_allowance ?? ''} className="field-input" />
             </div>
           </div>
+
+          <DurationPreview />
 
           <ReturnSection
             flightNumber={ticket.return_flight_number ?? ''}

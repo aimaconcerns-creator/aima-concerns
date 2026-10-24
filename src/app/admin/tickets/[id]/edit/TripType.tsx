@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, ReactNode } from 'react'
 import { AirportSelect } from '../../airports'
+import { flightDuration, formatDuration } from '@/lib/flightTime'
 
 type Segment = {
   origin: string
@@ -118,7 +119,7 @@ export function MultiCitySection({ defaultSegments }: { defaultSegments: Segment
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-            <span style={{ color: '#d9a441', fontWeight: 700, fontSize: '13px' }}>Leg {i + 2}</span>
+            <span style={{ color: '#d9a441', fontWeight: 700, fontSize: '13px' }}>Leg {i + 2}{(() => { const d = flightDuration(seg.origin, seg.departure_datetime, seg.destination, seg.arrival_datetime); return d === null ? '' : d <= 0 ? ' · check times' : ' · ' + formatDuration(d) })()}</span>
             <button
               type="button"
               onClick={() => remove(i)}

@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
 import DeleteTicketButton from './DeleteTicketButton'
 import { AirportSelect } from './airports'
+import DurationPreview from './DurationPreview'
 import { TicketTypeProvider, TicketTypeSelect, ReturnSection, MultiCitySection } from './[id]/edit/TripType'
 
 async function addTicket(formData: FormData) {
@@ -228,6 +229,7 @@ export default async function AdminTicketsPage() {
             </div>
 
             <div style={{ flex: '1 1 100%' }}>
+              <DurationPreview />
               <ReturnSection flightNumber="" departure="" arrival="" />
               <MultiCitySection defaultSegments={[]} />
             </div>

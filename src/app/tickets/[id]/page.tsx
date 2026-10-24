@@ -45,6 +45,13 @@ export default async function TicketDetailPage({
   const canBook = !soldOut && !closed
   const low = canBook && t.available_seats <= 5
 
+  // Extra legs for Multi City tickets
+  const segs: any[] = Array.isArray(t.segments)
+    ? t.segments.filter((s: any) => s && s.departure_datetime && s.arrival_datetime)
+    : []
+  const isMulti = segs.length > 0
+  const allFlights = [t.flight_number, ...segs.map((s: any) => s.flight_number)].filter(Boolean).join(' / ')
+
   const Leg = ({ title, o, d, dep, arr, flight }: { title: string; o: string; d: string; dep: string; arr: string; flight?: string }) => (
     <div className="td-leg">
       <div className="td-legtitle">
@@ -79,6 +86,7 @@ export default async function TicketDetailPage({
         }
         .td-hero h1 { margin: 0; font-size: clamp(24px, 4vw, 38px); font-weight: 800; }
         .td-hero p { margin: 10px 0 0; color: #c9d8e8; font-size: 15px; }
+        .td-hero p.td-more { margin-top: 6px; font-size: 14px; color: #d9a441; font-weight: 600; }
         .td-wrap { max-width: 980px; margin: -40px auto 0; padding: 0 16px 50px; display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
         .td-main { flex: 2 1 460px; min-width: 0; }
         .td-side { flex: 1 1 280px; }
@@ -113,7 +121,12 @@ export default async function TicketDetailPage({
 
       <div className="td-hero">
         <h1>{t.origin} → {t.destination}</h1>
-        <p>{a?.name || 'Airline'}{t.flight_number ? ` · ${t.flight_number}` : ''}</p>
+        {isMulti && (
+          <p className="td-more">
+            {segs.map((s: any) => `${s.origin} → ${s.destination}`).join('  •  ')}
+          </p>
+        )}
+        <p>{a?.name || 'Airline'}{allFlights ? ` · ${allFlights}` : ''}</p>
       </div>
 
       <div className="td-wrap">
@@ -130,7 +143,7 @@ export default async function TicketDetailPage({
             </div>
 
             <Leg
-              title="Outbound"
+              title={isMulti ? 'Flight 1' : 'Outbound'}
               o={t.origin}
               d={t.destination}
               dep={t.departure_datetime}
@@ -138,7 +151,19 @@ export default async function TicketDetailPage({
               flight={t.flight_number}
             />
 
-            {t.ticket_type === 'Return' && t.return_departure_datetime && t.return_arrival_datetime && (
+            {segs.map((s: any, i: number) => (
+              <Leg
+                key={i}
+                title={`Flight ${i + 2}`}
+                o={s.origin}
+                d={s.destination}
+                dep={s.departure_datetime}
+                arr={s.arrival_datetime}
+                flight={s.flight_number}
+              />
+            ))}
+
+            {!isMulti && t.ticket_type === 'Return' && t.return_departure_datetime && t.return_arrival_datetime && (
               <Leg
                 title="Return"
                 o={t.destination}

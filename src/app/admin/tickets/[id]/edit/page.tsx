@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
 import { TicketTypeProvider, TicketTypeSelect, ReturnSection, MultiCitySection } from './TripType'
 import { AirportSelect } from '../../airports'
-import DurationPreview from '../DurationPreview'
+import DurationPreview from '../../DurationPreview'
 
 const STATUSES = ['Booking Open', 'Sold Out', 'Booking Closed', 'Departed']
 

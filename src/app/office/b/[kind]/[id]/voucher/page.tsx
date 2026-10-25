@@ -70,8 +70,9 @@ export default async function OfficeVoucher({
   const wa = `https://wa.me/?text=${encodeURIComponent(`Aima Concerns booking ${b.reference} — ${title}. ${statusTitle}. ${statusText}`)}`
 
   return (
-    <div>
+    <div className="v-page">
       <style>{officeCss}{`
+        .v-wrap, .v-wrap * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .v-wrap{max-width:820px;margin:0 auto;background:#fff;border:1px solid #e3e9f1;border-radius:16px;overflow:hidden;box-shadow:0 6px 22px rgba(18,51,95,.08)}
         .v-top{background:linear-gradient(135deg,#0d3b47,#2f7f7a);color:#fff;padding:22px 28px;display:flex;justify-content:space-between;align-items:center;gap:16px}
         .v-top h2{margin:0;font-size:20px;letter-spacing:.06em}
@@ -84,7 +85,11 @@ export default async function OfficeVoucher({
         .v-status div{font-size:12px;letter-spacing:.08em}
         .v-status p{margin:4px 0 0;font-size:14px;font-weight:600}
         .v-foot{border-top:1px solid #e3e9f1;padding:16px 28px;font-size:12px;color:#6b7c93;line-height:1.7;background:#fbfcfe}
-        @media print{.v-wrap{box-shadow:none;border:1px solid #999}}
+        @page{size:A4 portrait;margin:0}
+        @media print{
+          .v-page{padding:10mm}
+          .v-wrap{box-shadow:none;border:1px solid #999}
+        }
       `}</style>
 
       <div className="no-print" style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>

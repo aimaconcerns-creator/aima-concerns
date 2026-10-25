@@ -40,6 +40,8 @@ export default async function AdminLayout({
     { href: '/admin/manifests', label: 'Group Manifests' },
     { href: '/office/ledgers', label: 'Group Ledgers' },
     { href: '/admin/airlines', label: 'Manage Airlines' },
+    { href: '/admin/staff', label: 'Manage Staff' },
+    { href: '/admin/foc', label: 'FOC Report' },
   ]
 
   return (

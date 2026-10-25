@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
-import { Badge, customerMap, fmt, officeCss, paidOf, payLabel, pkt } from '@/app/office/lib'
+import { Badge, customerMap, fmt, officeCss, paidOf, payLabel, pkt } from '../../../lib'
 import BookingActions from './BookingActions'
 
 function describe(l: any): string {
@@ -59,12 +59,23 @@ export default async function BookingView({
       <style>{officeCss}</style>
       <Link href="/office" style={{ color: '#2f7f7a', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>← Home</Link>
 
-      <div className="pg-bar" style={{ marginTop: 14 }}>
+      <div className="pg-bar" style={{ marginTop: 14, marginBottom: 6 }}>
         <div className="pg-h">
           <h1>{b.reference} <Badge label={payLabel(b)} /></h1>
           <p>{title} · {sub}</p>
         </div>
       </div>
+
+      <BookingActions
+        kind={kind}
+        bookingId={id}
+        status={b.status}
+        paymentType={b.payment_type}
+        balance={balance}
+        isOffline={isOffline}
+        passengers={pax || []}
+        remarks={b.remarks || ''}
+      />
 
       <div className="card">
         <h3>Booking details</h3>
@@ -105,18 +116,6 @@ export default async function BookingView({
           </table>
         </div>
       </div>
-
-      <BookingActions
-        key={b.status + '-' + paid + '-' + (log?.length || 0)}
-        kind={kind}
-        bookingId={id}
-        status={b.status}
-        paymentType={b.payment_type}
-        balance={balance}
-        isOffline={isOffline}
-        passengers={pax || []}
-        remarks={b.remarks || ''}
-      />
 
       <div className="card">
         <h3>Activity</h3>

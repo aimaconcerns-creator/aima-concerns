@@ -1,6 +1,16 @@
 import React from 'react'
 
 export const fmt = (n: any) => 'PKR ' + Number(n || 0).toLocaleString('en-PK')
+export const num = (n: any) => Number(n || 0).toLocaleString('en-US')
+
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+export function dmy(s: any): string {
+  if (!s) return '—'
+  const m = String(s).slice(0, 10).match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!m) return String(s)
+  return `${m[3]} ${MON[Number(m[2]) - 1]} ${m[1]}`
+}
 
 export const paidOf = (b: any) =>
   b.booking_source === 'online' && b.status === 'Paid'
@@ -19,6 +29,24 @@ export function payLabel(b: any): string {
 
 export const pkt = (iso: string) =>
   new Date(iso).toLocaleString('en-GB', { timeZone: 'Asia/Karachi', dateStyle: 'medium', timeStyle: 'short' })
+
+export const pktShort = (iso: string) =>
+  new Date(iso).toLocaleString('en-GB', {
+    timeZone: 'Asia/Karachi', weekday: 'short', day: '2-digit', month: 'short',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  })
+
+export function timeLeft(iso: string): string {
+  const ms = new Date(iso).getTime() - Date.now()
+  if (ms <= 0) return 'expired'
+  const mins = Math.floor(ms / 60000)
+  const d = Math.floor(mins / 1440)
+  const h = Math.floor((mins % 1440) / 60)
+  const m = mins % 60
+  if (d > 0) return `in ${d}d ${h}h`
+  if (h > 0) return `in ${h}h ${m}m`
+  return `in ${m}m`
+}
 
 const BADGE: Record<string, [string, string]> = {
   Paid: ['#e6f4ee', '#1f7a55'],

@@ -66,7 +66,7 @@ export default async function OfficeVoucher({
   else if (b.status === 'Partial') { statusTitle = 'PARTIAL PAYMENT'; statusText = `Paid ${fmt(paid)}. Balance ${fmt(balance)}${b.balance_due_date ? ' due by ' + b.balance_due_date : ''}.`; color = '#a8761a'; bg = '#fff4de' }
   else { statusTitle = 'PAY LATER — NOT YET PAID'; statusText = `Balance ${fmt(balance)}. Seats held until ${pkt(b.expires_at)}.`; color = '#2a5fa8'; bg = '#e8f0fb' }
 
-  const qr = await QRCode.toDataURL(`https://aimaconcerns.com/admin/verify/${b.reference}`, { margin: 1, width: 200 })
+  const qr = await QRCode.toDataURL(`https://aimaconcerns.com/office/find?ref=${b.reference}`, { margin: 1, width: 200 })
   const wa = `https://wa.me/?text=${encodeURIComponent(`Aima Concerns booking ${b.reference} — ${title}. ${statusTitle}. ${statusText}`)}`
 
   return (

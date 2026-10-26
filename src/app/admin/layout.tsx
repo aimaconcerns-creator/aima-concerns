@@ -38,7 +38,7 @@ export default async function AdminLayout({
     { href: '/admin/packages', label: 'Packages' },
     { href: '/admin/tickets', label: 'Manage Tickets' },
     { href: '/admin/manifests', label: 'Group Manifests' },
-    { href: '/office/ledgers', label: 'Group Ledgers' },
+    { href: '/office/accounts', label: 'Accounts & Finance' },
     { href: '/admin/airlines', label: 'Manage Airlines' },
     { href: '/admin/staff', label: 'Manage Staff' },
     { href: '/admin/foc', label: 'FOC Report' },

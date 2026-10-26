@@ -32,7 +32,7 @@ export default async function OfficeLayout({
     { href: '/office', label: 'Home' },
     { href: '/office/booking', label: 'Offline Booking' },
     { href: '/office/manifests', label: 'Manifests' },
-    { href: '/office/ledgers', label: 'Group Ledgers' },
+    { href: '/office/accounts', label: 'Accounts & Finance' },
   ]
 
   return (
@@ -65,7 +65,7 @@ export default async function OfficeLayout({
 
         .search { display: flex; gap: 6px; }
         .search input {
-          width: 210px; height: 40px; padding: 0 12px; border: 1px solid #d5dde8; border-radius: 9px;
+          width: 260px; height: 40px; padding: 0 12px; border: 1px solid #d5dde8; border-radius: 9px;
           font-size: 13px; font-family: inherit; color: #12335f; text-transform: uppercase;
         }
         .search input::placeholder { text-transform: none; color: #8a96a8; }
@@ -116,7 +116,7 @@ export default async function OfficeLayout({
           </nav>
 
           <form action="/office/find" method="get" className="search">
-            <input name="ref" placeholder="Search PNR / Reference" required />
+            <input name="ref" placeholder="Search reference, name or passport" required />
             <button type="submit">Search</button>
           </form>
 

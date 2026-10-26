@@ -122,9 +122,9 @@ export default async function OfficeHome() {
       ),
     },
     {
-      href: '/office/ledgers',
-      title: 'Group Ledgers',
-      text: 'Check what each customer has paid and what is still pending on a package.',
+      href: '/office/accounts',
+      title: 'Accounts & Finance',
+      text: 'Group ledgers for every package, and party ledgers for the agents who bring you groups.',
       color: '#d9a441',
       icon: (
         <>

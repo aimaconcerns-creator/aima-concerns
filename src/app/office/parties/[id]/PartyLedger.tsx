@@ -61,6 +61,8 @@ const css = `
 .sheet .brand img{height:46px;width:auto}
 .sheet .brand b{display:block;font-size:17px;letter-spacing:.08em}
 .sheet .brand span{display:block;font-size:11px;margin-top:2px}
+.sheet .brand > div{min-width:0}
+.sheet .brand .ct{display:block;font-size:10.5px;margin-top:1px;color:#000}
 .sheet .doc{font-size:20px;font-weight:800;letter-spacing:.08em;text-align:right}
 .sheet .subj{margin-top:14px;font-size:15px}
 .sheet .meta{margin:4px 0 12px;font-size:13px}
@@ -350,6 +352,9 @@ export default function PartyLedger(props: Props) {
             <div>
               <b>AIMA CONCERNS</b>
               <span>Travel &amp; Tours · Est. 1999</span>
+              <span className="ct">Office 102 &amp; 103, Eden Heights, Jail Road, Lahore</span>
+              <span className="ct">+92 322 4631622 · +92 332 7869765</span>
+              <span className="ct">aimaconcerns@gmail.com · aimaconcerns.com</span>
             </div>
           </div>
           <div className="doc">PARTY LEDGER</div>

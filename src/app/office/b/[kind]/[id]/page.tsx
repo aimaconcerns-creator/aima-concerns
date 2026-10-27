@@ -10,6 +10,11 @@ function describe(l: any): string {
   if (l.action === 'Payment recorded') return `${fmt(d.amount)} by ${d.method}${d.note ? ' · ' + d.note : ''} · now ${d.status_after}`
   if (l.action === 'Cancelled') return `${d.reason || 'No reason given'} · was ${d.status_before}`
   if (l.action === 'Edited') return `Passengers saved${d.remarks_after !== d.remarks_before ? ' · remarks changed' : ''}`
+  if (l.action === 'Split') {
+    return d.role === 'new'
+      ? `Created by splitting ${d.from_reference} · ${d.moved} passenger(s) · total ${fmt(d.total)} · paid ${fmt(d.paid)}`
+      : `${d.moved} passenger(s) moved to ${d.new_reference} · total now ${fmt(d.total_after)} · paid ${fmt(d.paid_after)}`
+  }
   return ''
 }
 
@@ -67,11 +72,14 @@ export default async function BookingView({
       </div>
 
       <BookingActions
+        key={b.status + '-' + paid + '-' + total + '-' + (pax?.length || 0)}
         kind={kind}
         bookingId={id}
         status={b.status}
         paymentType={b.payment_type}
         balance={balance}
+        total={total}
+        paid={paid}
         isOffline={isOffline}
         passengers={pax || []}
         remarks={b.remarks || ''}

@@ -9,12 +9,20 @@ const METHODS = ['Cash', 'Bank Transfer', 'Easypaisa', 'JazzCash']
 const TITLES = ['Mr', 'Mrs', 'Ms', 'Miss', 'Mstr', 'CHD', 'INF']
 const money = (n: number) => 'PKR ' + Number(n || 0).toLocaleString('en-US')
 
+const catOf = (title: string, kind: string): 'inf' | 'chd' | 'adult' => {
+  const t = String(title || '').trim().toUpperCase()
+  if (t.startsWith('INF')) return 'inf'
+  if (kind === 'ticket' && t.startsWith('CHD')) return 'chd'
+  return 'adult'
+}
+
 const css = `
 .ba{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 22px}
 .ba .btn{padding:12px 22px;font-size:14px}
 .ba .pay{margin-left:auto}
 .ov{position:fixed;inset:0;background:rgba(18,51,95,.45);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
 .md{background:#fff;border-radius:16px;padding:26px;width:100%;max-width:460px;box-shadow:0 20px 50px rgba(18,51,95,.3)}
+.md.wide{max-width:640px;max-height:92vh;overflow:auto}
 .md h3{margin:0 0 4px;font-size:18px;color:#12335f}
 .md .sub{margin:0 0 18px;font-size:13px;color:#6b7c93;line-height:1.5}
 .md .bal{display:flex;justify-content:space-between;align-items:baseline;background:#f4f7fb;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#4b5f7a}
@@ -22,6 +30,16 @@ const css = `
 .md .fld{margin-bottom:14px}
 .md .acts{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
 .md .err{background:#fdecea;border:1px solid #f0c9c6;color:#b3261e;padding:10px 14px;border-radius:9px;font-size:13px;font-weight:600;margin-bottom:14px}
+.sp-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid #e3e9f1;border-radius:10px;margin-bottom:8px;cursor:pointer;background:#fff;font-size:13.5px;color:#12335f}
+.sp-row.on{background:#eef7f3;border-color:#cfe8dd}
+.sp-row .sp-name{flex:1}
+.sp-row small{display:block;color:#6b7c93;font-size:12px;margin-top:2px}
+.sp-two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.sp-box{border:1px solid #e3e9f1;border-radius:10px;padding:12px 14px;font-size:13px;color:#4b5f7a;line-height:1.6}
+.sp-box h4{margin:0 0 4px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#6b7c93}
+.sp-box b{color:#12335f}
+.sp-probs{background:#fff4de;border:1px solid #f0dca8;color:#8a6414;padding:10px 14px;border-radius:9px;font-size:13px;font-weight:600;margin-bottom:12px;line-height:1.6}
+@media(max-width:600px){.sp-two{grid-template-columns:1fr}}
 `
 
 export default function BookingActions(props: {
@@ -30,16 +48,19 @@ export default function BookingActions(props: {
   status: string
   paymentType: string | null
   balance: number
+  total: number
+  paid: number
   isOffline: boolean
   passengers: any[]
   remarks: string
 }) {
-  const { kind, bookingId, status, paymentType, balance, isOffline, passengers, remarks } = props
+  const { kind, bookingId, status, paymentType, balance, total, paid, isOffline, passengers, remarks } = props
   const router = useRouter()
   const supabase = createClient()
 
   const [payOpen, setPayOpen] = useState(false)
   const [cancelOpen, setCancelOpen] = useState(false)
+  const [splitOpen, setSplitOpen] = useState(false)
   const [amount, setAmount] = useState(String(balance))
   const [method, setMethod] = useState('Cash')
   const [note, setNote] = useState('')
@@ -51,6 +72,10 @@ export default function BookingActions(props: {
   const [modalErr, setModalErr] = useState('')
   const [busy, setBusy] = useState(false)
 
+  const [moveIds, setMoveIds] = useState<string[]>([])
+  const [depTouched, setDepTouched] = useState(false)
+  const [depInput, setDepInput] = useState('')
+
   useEffect(() => {
     setPax(passengers)
     setRem(remarks)
@@ -59,6 +84,7 @@ export default function BookingActions(props: {
   const mustFull = kind === 'ticket' || paymentType === 'Pay Later'
   const canPay = isOffline && (status === 'Unpaid' || status === 'Partial') && balance > 0
   const canChange = isOffline && ['Unpaid', 'Partial', 'Paid'].includes(status)
+  const canSplit = canChange && passengers.length >= 2
 
   const amt = Number(amount) || 0
   const after = Math.max(0, balance - amt)
@@ -106,6 +132,82 @@ export default function BookingActions(props: {
     router.refresh()
   }
 
+  // ---- Split ----
+  const tally = (list: any[]) => {
+    let ad = 0
+    let ch = 0
+    let inf = 0
+    let sum = 0
+    list.forEach((p) => {
+      const c = catOf(p.title, kind)
+      if (c === 'inf') inf += 1
+      else if (c === 'chd') ch += 1
+      else ad += 1
+      sum += Number(p.price || 0)
+    })
+    return { ad, ch, inf, sum, seats: ad + ch, count: list.length }
+  }
+
+  const moving = passengers.filter((p) => moveIds.includes(p.id))
+  const staying = passengers.filter((p) => !moveIds.includes(p.id))
+  const mv = tally(moving)
+  const st = tally(staying)
+  const isPartial = status === 'Partial'
+  const propDep = total > 0 ? Math.round((paid * mv.sum) / total) : 0
+  const depVal = depTouched ? depInput : String(propDep)
+  const dep = Number(depVal)
+
+  const problems: string[] = []
+  if (moving.length === 0) {
+    problems.push('Tick at least one passenger to move to the new booking.')
+  } else if (staying.length === 0) {
+    problems.push('At least one passenger must stay on this booking.')
+  } else {
+    if (mv.ad < 1) problems.push('The new booking needs at least one adult.')
+    if (mv.inf > mv.ad) problems.push('Infants cannot outnumber adults on the new booking.')
+    if (st.ad < 1) problems.push('This booking needs at least one adult left on it.')
+    if (st.inf > st.ad) problems.push('Infants cannot outnumber adults on this booking.')
+    if (isPartial) {
+      if (depVal === '' || isNaN(dep) || dep < 0) {
+        problems.push('Enter a valid deposit for the new booking.')
+      } else {
+        if (dep > paid) problems.push(`The deposit cannot be more than what has been paid (${money(paid)}).`)
+        if (dep > mv.sum) problems.push(`The deposit cannot be more than the new booking total (${money(mv.sum)}).`)
+        if (paid - dep > st.sum) problems.push(`This booking would be left paid more than its own total (${money(st.sum)}).`)
+      }
+    }
+  }
+
+  const openSplit = () => {
+    setMoveIds([])
+    setDepTouched(false)
+    setDepInput('')
+    setModalErr('')
+    setSplitOpen(true)
+  }
+
+  const toggleMove = (id: string) => {
+    setMoveIds((l) => (l.includes(id) ? l.filter((x) => x !== id) : [...l, id]))
+    setDepTouched(false)
+  }
+
+  const confirmSplit = async () => {
+    if (problems.length) return
+    setBusy(true)
+    setModalErr('')
+    const { data, error } = await supabase.rpc('split_offline_booking', {
+      p_kind: kind,
+      p_booking_id: bookingId,
+      p_passenger_ids: moveIds,
+      p_deposit: isPartial ? dep : null,
+    })
+    setBusy(false)
+    if (error) { setModalErr(error.message); return }
+    const out: any = data
+    setSplitOpen(false)
+    router.push(`/office/b/${kind}/${out.id}`)
+  }
+
   const save = async () => {
     setBusy(true)
     setMsg(null)
@@ -138,6 +240,7 @@ export default function BookingActions(props: {
             {editing ? 'Close edit' : 'Edit'}
           </button>
         )}
+        {canSplit && <button className="btn ghost" onClick={openSplit}>Split</button>}
         {canChange && <button className="btn red" onClick={openCancel}>Cancel booking</button>}
         {canPay && <button className="btn navy pay" onClick={openPay}>Pay now</button>}
       </div>
@@ -222,6 +325,79 @@ export default function BookingActions(props: {
               <button className="btn ghost" disabled={busy} onClick={() => setPayOpen(false)}>Close</button>
               <button className="btn navy" disabled={busy} onClick={confirmPay}>
                 {busy ? 'Saving...' : 'Confirm payment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {splitOpen && (
+        <div className="ov no-print" onClick={() => { if (!busy) setSplitOpen(false) }}>
+          <div className="md wide" onClick={(e) => e.stopPropagation()}>
+            <h3>Split booking</h3>
+            <p className="sub">
+              Tick the passengers who move to a <b>new booking with its own reference</b>. The seats stay held and
+              nothing changes on the public site.
+            </p>
+
+            {modalErr && <div className="err">{modalErr}</div>}
+
+            {passengers.map((p: any) => {
+              const on = moveIds.includes(p.id)
+              const c = catOf(p.title, kind)
+              return (
+                <label key={p.id} className={'sp-row' + (on ? ' on' : '')}>
+                  <input type="checkbox" checked={on} onChange={() => toggleMove(p.id)} />
+                  <span className="sp-name">
+                    {p.title} {p.given_name} {p.surname}
+                    <small>{c === 'inf' ? 'Infant' : c === 'chd' ? 'Child' : 'Adult'} · {p.passport_number}</small>
+                  </span>
+                  <b>{money(p.price)}</b>
+                </label>
+              )
+            })}
+
+            <div className="sp-two">
+              <div className="sp-box">
+                <h4>Stays on this booking</h4>
+                <b>{st.count}</b> passenger(s) · <b>{st.seats}</b> seat(s)<br />
+                Total <b>{money(st.sum)}</b>
+              </div>
+              <div className="sp-box" style={{ background: '#f4faf7' }}>
+                <h4>Moves to the new booking</h4>
+                <b>{mv.count}</b> passenger(s) · <b>{mv.seats}</b> seat(s)<br />
+                Total <b>{money(mv.sum)}</b>
+              </div>
+            </div>
+
+            {isPartial && moving.length > 0 && staying.length > 0 && (
+              <div className="fld">
+                <label className="lab">
+                  Deposit that goes to the new booking (PKR). Paid so far on this booking: {money(paid)}
+                </label>
+                <input className="in" type="number" value={depVal}
+                  onChange={(e) => { setDepTouched(true); setDepInput(e.target.value) }} />
+                <p className="note" style={{ marginTop: 6 }}>
+                  Filled in proportion to the fares. Change it if the family says the deposit was for particular
+                  people. This booking keeps {money(Math.max(0, paid - (isNaN(dep) ? 0 : dep)))}.
+                </p>
+              </div>
+            )}
+
+            {problems.length > 0 && moveIds.length > 0 && (
+              <div className="sp-probs">{problems.map((t) => <div key={t}>{t}</div>)}</div>
+            )}
+
+            <p className="note" style={{ marginTop: 0 }}>
+              The new booking keeps the same customer, payment type and remarks.
+              {status === 'Unpaid' ? ' Both bookings keep the same hold time.' : ''}
+              {' '}Reprint this booking's voucher after splitting, because the old printout is out of date.
+            </p>
+
+            <div className="acts">
+              <button className="btn ghost" disabled={busy} onClick={() => setSplitOpen(false)}>Close</button>
+              <button className="btn navy" disabled={busy || problems.length > 0} onClick={confirmSplit}>
+                {busy ? 'Splitting...' : 'Confirm split'}
               </button>
             </div>
           </div>

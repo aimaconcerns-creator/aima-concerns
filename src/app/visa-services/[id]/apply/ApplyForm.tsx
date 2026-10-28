@@ -13,6 +13,7 @@ type Applicant = {
   passport_expiry_date: string
   passport_file: File | null
   cnic_file: File | null
+  photo_file: File | null
 }
 
 type Product = {
@@ -28,6 +29,7 @@ const MAX_FAMILY = 7
 const MAX_FILE_MB = 10
 const MIN_FILE_KB = 80
 const MIN_IMAGE_SIDE = 1000
+const MIN_PHOTO_SIDE = 600
 
 const emptyApplicant = (): Applicant => ({
   given_name: '',
@@ -38,6 +40,7 @@ const emptyApplicant = (): Applicant => ({
   passport_expiry_date: '',
   passport_file: null,
   cnic_file: null,
+  photo_file: null,
 })
 
 const ageOf = (dob: string) => {
@@ -77,6 +80,29 @@ const checkScan = (file: File, label: string): Promise<string> =>
     img.src = url
   })
 
+// The passport-size photo must be a JPG or PNG image, not a PDF.
+const checkPhoto = (file: File): Promise<string> =>
+  new Promise((resolve) => {
+    if (file.type !== 'image/jpeg' && file.type !== 'image/png') {
+      return resolve('Photo: please upload a JPG or PNG image (not a PDF).')
+    }
+    if (file.size > MAX_FILE_MB * 1024 * 1024) return resolve(`Photo: file must be smaller than ${MAX_FILE_MB} MB.`)
+
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      if (Math.max(img.width, img.height) < MIN_PHOTO_SIDE) {
+        resolve('Photo: image resolution is too low. Please upload a clearer, larger photo.')
+      } else resolve('')
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      resolve('Photo: this image could not be read. Please try another file.')
+    }
+    img.src = url
+  })
+
 export default function ApplyForm({ userId, product }: { userId: string; product: Product }) {
   const [type, setType] = useState<'' | 'individual' | 'family'>('')
   const [applicants, setApplicants] = useState<Applicant[]>([emptyApplicant()])
@@ -106,14 +132,17 @@ export default function ApplyForm({ userId, product }: { userId: string; product
   const update = (i: number, field: keyof Applicant, value: string) =>
     setApplicants((prev) => prev.map((p, idx) => (idx === i ? { ...p, [field]: value } : p)))
 
-  const pickFile = async (i: number, field: 'passport_file' | 'cnic_file', file: File | null) => {
+  const pickFile = async (i: number, field: 'passport_file' | 'cnic_file' | 'photo_file', file: File | null) => {
     const key = `${i}-${field}`
     if (!file) {
       setApplicants((prev) => prev.map((p, idx) => (idx === i ? { ...p, [field]: null } : p)))
       setFileErrors((e) => ({ ...e, [key]: '' }))
       return
     }
-    const err = await checkScan(file, field === 'passport_file' ? 'Passport scan' : 'CNIC copy')
+    const err =
+      field === 'photo_file'
+        ? await checkPhoto(file)
+        : await checkScan(file, field === 'passport_file' ? 'Passport scan' : 'CNIC copy')
     setFileErrors((e) => ({ ...e, [key]: err }))
     setApplicants((prev) => prev.map((p, idx) => (idx === i ? { ...p, [field]: err ? null : file } : p)))
   }
@@ -168,6 +197,7 @@ export default function ApplyForm({ userId, product }: { userId: string; product
       const who = type === 'family' ? `Member ${i + 1}` : 'Applicant'
       if (!applicants[i].passport_file) return setMessage(`${who}: passport scan is required.`)
       if (!applicants[i].cnic_file) return setMessage(`${who}: CNIC copy is required.`)
+      if (!applicants[i].photo_file) return setMessage(`${who}: passport-size photo is required.`)
     }
     if (Object.values(fileErrors).some(Boolean)) return setMessage('Please fix the file problems shown above.')
 
@@ -191,6 +221,7 @@ export default function ApplyForm({ userId, product }: { userId: string; product
       for (const a of applicants) {
         const passport_scan_path = await uploadOne(supabase, a.passport_file as File, 'passport')
         const cnic_path = await uploadOne(supabase, a.cnic_file as File, 'cnic')
+        const photo_path = await uploadOne(supabase, a.photo_file as File, 'photo')
         payload.push({
           given_name: a.given_name,
           surname: a.surname,
@@ -200,6 +231,7 @@ export default function ApplyForm({ userId, product }: { userId: string; product
           passport_expiry_date: a.passport_expiry_date,
           passport_scan_path,
           cnic_path,
+          photo_path,
         })
       }
 
@@ -436,6 +468,10 @@ export default function ApplyForm({ userId, product }: { userId: string; product
                             <li>Photo, name, number, dates and the two lines at the bottom must be sharp.</li>
                             <li>No blur, glare, shadows or fingers over the page.</li>
                           </ul>
+                          <p style={{ margin: '10px 0 0' }}>
+                            <b>Passport-size photo:</b> a recent photo with a plain background and the face clearly
+                            visible. No hat or sunglasses. JPG or PNG only.
+                          </p>
                         </div>
 
                         <div className="va-grid">
@@ -460,6 +496,17 @@ export default function ApplyForm({ userId, product }: { userId: string; product
                             />
                             {fileErrors[`${i}-cnic_file`] && <p className="va-ferr">{fileErrors[`${i}-cnic_file`]}</p>}
                             {p.cnic_file && !fileErrors[`${i}-cnic_file`] && <p className="va-fok">✓ {p.cnic_file.name}</p>}
+                          </div>
+                          <div>
+                            <label>Passport-size Photo *</label>
+                            <input
+                              className="va-in va-file"
+                              type="file"
+                              accept="image/jpeg,image/png"
+                              onChange={(e) => pickFile(i, 'photo_file', e.target.files?.[0] || null)}
+                            />
+                            {fileErrors[`${i}-photo_file`] && <p className="va-ferr">{fileErrors[`${i}-photo_file`]}</p>}
+                            {p.photo_file && !fileErrors[`${i}-photo_file`] && <p className="va-fok">✓ {p.photo_file.name}</p>}
                           </div>
                         </div>
                       </div>

@@ -33,6 +33,7 @@ export default async function OfficeLayout({
     { href: '/office/booking', label: 'Offline Booking' },
     { href: '/office/manifests', label: 'Manifests' },
     { href: '/office/accounts', label: 'Accounts & Finance' },
+    { href: '/office/visa', label: 'Visa' },
   ]
 
   return (
@@ -58,14 +59,14 @@ export default async function OfficeLayout({
 
         .menu { display: flex; gap: 4px; flex: 1; }
         .menu a {
-          padding: 10px 14px; border-radius: 8px; text-decoration: none;
+          padding: 10px 11px; border-radius: 8px; text-decoration: none;
           font-size: 13.5px; font-weight: 600; color: #4b5f7a; white-space: nowrap;
         }
         .menu a:hover { background: #eef4f3; color: #2f7f7a; }
 
         .search { display: flex; gap: 6px; }
         .search input {
-          width: 260px; height: 40px; padding: 0 12px; border: 1px solid #d5dde8; border-radius: 9px;
+          width: 210px; height: 40px; padding: 0 12px; border: 1px solid #d5dde8; border-radius: 9px;
           font-size: 13px; font-family: inherit; color: #12335f; text-transform: uppercase;
         }
         .search input::placeholder { text-transform: none; color: #8a96a8; }

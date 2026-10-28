@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
 import { officeCss, pktShort, timeLeft } from './lib'
+import NoticeBoard from './NoticeBoard'
 
 type Hold = {
   id: string
@@ -173,6 +174,8 @@ export default async function OfficeHome() {
         <h1>Welcome, {staff?.full_name || 'Team'}</h1>
         <p className="sub">Choose what you would like to do today.</p>
       </div>
+
+      <NoticeBoard />
 
       <div className="grid">
         {cards.map((c) => (

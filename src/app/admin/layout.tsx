@@ -42,6 +42,7 @@ export default async function AdminLayout({
     { href: '/admin/airlines', label: 'Manage Airlines' },
     { href: '/admin/staff', label: 'Manage Staff' },
     { href: '/admin/foc', label: 'FOC Report' },
+    { href: '/admin/notices', label: 'Notice Board' },
   ]
 
   return (

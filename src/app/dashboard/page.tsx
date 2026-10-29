@@ -110,10 +110,10 @@ export default async function DashboardPage() {
               <p>View your bookings, pay for reserved seats, and open your vouchers.</p>
             </Link>
 
-            <div className="card disabled">
+            <Link href="/dashboard/visa" className="card">
               <h3>Visa Status</h3>
-              <p>Coming soon</p>
-            </div>
+              <p>Track your visa applications, see the fee, and pay once an application is accepted.</p>
+            </Link>
 
             <div className="card disabled">
               <h3>Documents</h3>

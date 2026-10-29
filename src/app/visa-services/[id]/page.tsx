@@ -26,7 +26,9 @@ export default async function VisaDetailPage({
   const total = visaFee + serviceFee
   const fmt = (n: number) => 'PKR ' + Math.round(n).toLocaleString()
 
-  const applyHref = user ? `/visa-services/${p.id}/apply` : '/login'
+  const applyHref = user
+    ? `/visa-services/${p.id}/apply`
+    : `/login?next=${encodeURIComponent(`/visa-services/${p.id}/apply`)}`
 
   return (
     <div>

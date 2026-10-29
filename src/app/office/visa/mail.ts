@@ -12,7 +12,7 @@ const money = (n: any) => 'PKR ' + Number(n || 0).toLocaleString('en-US')
 const pkt = (iso: string) =>
   new Date(iso).toLocaleString('en-GB', { timeZone: 'Asia/Karachi', dateStyle: 'medium', timeStyle: 'short' })
 
-type Kind = 'accepted' | 'rejected' | 'approved'
+type Kind = 'accepted' | 'rejected' | 'approved' | 'issued'
 
 const wrap = (title: string, body: string) =>
   `<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#12335f">` +
@@ -28,10 +28,10 @@ const wrap = (title: string, body: string) =>
 export async function sendVisaMail(kind: Kind, info: any): Promise<string> {
   const key = process.env.RESEND_API_KEY
   if (!key) {
-    return 'The email was not sent because the email key is not set up yet. The status change is saved.'
+    return 'The email was not sent because the email key is not set up yet. The change is saved.'
   }
   if (!info || !info.email) {
-    return 'The email was not sent because this customer has no email address on their profile. The status change is saved.'
+    return 'The email was not sent because this customer has no email address on their profile. The change is saved.'
   }
 
   const name = esc(info.name || 'Customer')
@@ -66,14 +66,23 @@ export async function sendVisaMail(kind: Kind, info: any): Promise<string> {
         ? `<p>As the fee was already paid, our team will contact you about it.</p>`
         : `<p>You have not been charged.</p>`) +
       `<p>If you have any questions, please call us and quote your code <b>${code}</b>.</p>`
-  } else {
+  } else if (kind === 'approved') {
     subject = `Visa application ${info.tracking_code} approved`
     title = 'Your visa application is approved'
     body =
       `<p>Dear ${name},</p>` +
       `<p>Good news: your <b>${visa}</b> application <b>${code}</b> has been approved.</p>` +
-      `<p>Our team will contact you shortly about the next steps. Please keep your code <b>${code}</b> and quote it ` +
-      `whenever you contact us.</p>`
+      `<p>Our team is now preparing your visa. We will email you again as soon as it is ready to download from your ` +
+      `account. Please keep your code <b>${code}</b> and quote it whenever you contact us.</p>`
+  } else {
+    subject = `Your visa is ready: application ${info.tracking_code}`
+    title = 'Your visa is ready'
+    body =
+      `<p>Dear ${name},</p>` +
+      `<p>Your <b>${visa}</b> visa for application <b>${code}</b> has been issued and is ready.</p>` +
+      `<p>To download it, log in at aimaconcerns.com, open <b>Visa Status</b> on your dashboard, and use the ` +
+      `<b>Download visa</b> button next to each traveller's name.</p>` +
+      `<p>Please check every detail on the visa carefully, and call us at once if anything looks wrong.</p>`
   }
 
   const ctrl = new AbortController()
@@ -91,10 +100,10 @@ export async function sendVisaMail(kind: Kind, info: any): Promise<string> {
       }),
       signal: ctrl.signal,
     })
-    if (!res.ok) return `The email could not be sent (error ${res.status}). The status change is saved.`
+    if (!res.ok) return `The email could not be sent (error ${res.status}). The change is saved.`
     return 'The customer has been emailed.'
   } catch {
-    return 'The email could not be sent. The status change is saved.'
+    return 'The email could not be sent. The change is saved.'
   } finally {
     clearTimeout(timer)
   }

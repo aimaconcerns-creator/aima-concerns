@@ -1,6 +1,6 @@
 import React from 'react'
 
-export const VISA_STATUSES = ['Submitted', 'Awaiting Payment', 'Processing', 'Approved', 'Rejected', 'Expired']
+export const VISA_STATUSES = ['Submitted', 'Awaiting Payment', 'Processing', 'Approved', 'Issued', 'Rejected', 'Expired']
 
 const COLORS: Record<string, [string, string]> = {
   Submitted: ['#e8f0fb', '#2a5fa8'],
@@ -8,6 +8,7 @@ const COLORS: Record<string, [string, string]> = {
   'Awaiting Payment': ['#fff4de', '#a8761a'],
   Processing: ['#efe9fb', '#6a3fb5'],
   Approved: ['#e6f4ee', '#1f7a55'],
+  Issued: ['#e1f3f8', '#0d5c75'],
   Rejected: ['#fdecea', '#b3261e'],
   Expired: ['#eef0f3', '#6b7c93'],
 }

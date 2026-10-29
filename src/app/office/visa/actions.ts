@@ -14,6 +14,7 @@ async function noticeInfo(supabase: Awaited<ReturnType<typeof createClient>>, id
 function refresh(id: string) {
   revalidatePath('/office/visa')
   revalidatePath(`/office/visa/${id}`)
+  revalidatePath('/dashboard/visa')
 }
 
 export async function acceptVisa(id: string): Promise<Result> {
@@ -44,14 +45,18 @@ export async function rejectVisa(id: string, reason: string): Promise<Result> {
   }
 }
 
-export async function approveVisa(id: string): Promise<Result> {
+export async function setVisaStage(id: string, stage: string): Promise<Result> {
   try {
     const supabase = await createClient()
-    const { error } = await supabase.rpc('staff_approve_visa', { p_application_id: id })
+    const { data, error } = await supabase.rpc('staff_set_visa_stage', { p_application_id: id, p_stage: stage })
     if (error) return { ok: false, message: error.message }
     refresh(id)
-    const mail = await sendVisaMail('approved', await noticeInfo(supabase, id))
-    return { ok: true, message: 'Application approved. ' + mail }
+    const out = data as any
+    if (out?.email === 'approved' || out?.email === 'issued') {
+      const mail = await sendVisaMail(out.email, await noticeInfo(supabase, id))
+      return { ok: true, message: `Stage changed to ${stage}. ${mail}` }
+    }
+    return { ok: true, message: `Stage changed to ${stage}. No email was sent for this change.` }
   } catch (e: any) {
     return { ok: false, message: e?.message || 'Something went wrong.' }
   }

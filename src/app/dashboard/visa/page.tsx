@@ -26,6 +26,7 @@ const LABEL: Record<string, [string, string, string]> = {
   'Awaiting Payment': ['Payment due', '#fff4de', '#a8761a'],
   Processing: ['Processing', '#efe9fb', '#6a3fb5'],
   Approved: ['Approved', '#e6f4ee', '#1f7a55'],
+  Issued: ['Visa ready', '#e1f3f8', '#0d5c75'],
   Rejected: ['Not accepted', '#fdecea', '#b3261e'],
   Expired: ['Expired', '#eef0f3', '#6b7c93'],
 }
@@ -57,6 +58,11 @@ body { margin: 0; }
 .vy-msg.bad { background: #fdecea; color: #b3261e; }
 .vy-msg.mute { background: #eef0f3; color: #4b5f7a; }
 .vy-link { display: inline-block; margin-top: 12px; padding: 11px 22px; border-radius: 9px; background: #12335f; color: #fff; text-decoration: none; font-weight: 700; font-size: 14px; }
+.vy-files { margin-top: 12px; display: grid; gap: 8px; }
+.vy-file { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; background: #fff; border: 1px solid #cfe8dd; border-radius: 10px; padding: 10px 14px; color: #12335f; font-weight: 700; font-size: 14px; }
+.vy-dl { display: inline-block; padding: 9px 18px; border-radius: 8px; background: #0d5c75; color: #fff; text-decoration: none; font-weight: 800; font-size: 13px; }
+.vy-na { color: #6b7c93; font-size: 12.5px; font-weight: 600; }
+.vy-fine { margin-top: 10px; font-size: 12px; color: #4b5f7a; }
 .vy-pay { margin-top: 16px; border: 2px solid #f0dcae; background: #fffaf0; border-radius: 12px; padding: 18px; }
 .vy-pay-top { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
 .vy-pay small { display: block; font-size: 11px; font-weight: 700; color: #8a6414; letter-spacing: .08em; text-transform: uppercase; }
@@ -91,17 +97,40 @@ export default async function MyVisaApplications() {
   const balance = Number(w?.balance || 0)
 
   const ids = apps.map((a) => a.id)
-  const names = new Map<string, string[]>()
+  const people = new Map<string, { id: string; name: string }[]>()
+  let files: any[] = []
   if (ids.length) {
     const { data: px } = await supabase
       .from('visa_applicants')
-      .select('application_id, given_name, surname, created_at')
+      .select('id, application_id, given_name, surname, created_at')
       .in('application_id', ids)
       .order('created_at')
     ;(px || []).forEach((p: any) => {
-      const list = names.get(p.application_id) || []
-      list.push(`${p.given_name} ${p.surname}`)
-      names.set(p.application_id, list)
+      const list = people.get(p.application_id) || []
+      list.push({ id: p.id, name: `${p.given_name} ${p.surname}` })
+      people.set(p.application_id, list)
+    })
+
+    // Only returns rows for applications that are Issued
+    const { data: fx } = await supabase
+      .from('issued_visa_files')
+      .select('applicant_id, file_path')
+      .in('application_id', ids)
+    files = fx || []
+  }
+
+  const fileUrl = new Map<string, string>()
+  if (files.length) {
+    const { data: signed } = await supabase.storage
+      .from('issued-visas')
+      .createSignedUrls(files.map((f) => f.file_path), 900)
+    const byPath = new Map<string, string>()
+    ;(signed || []).forEach((s: any) => {
+      if (s.signedUrl && s.path) byPath.set(s.path, s.signedUrl)
+    })
+    files.forEach((f) => {
+      const u = byPath.get(f.file_path)
+      if (u) fileUrl.set(f.applicant_id, u)
     })
   }
 
@@ -120,7 +149,7 @@ export default async function MyVisaApplications() {
         <div className="vy-hero-in">
           <Link href="/dashboard" className="vy-back">← Back to Dashboard</Link>
           <h1>My Visa Applications</h1>
-          <p>Follow each application, and pay the fee once it has been accepted.</p>
+          <p>Follow each application, pay the fee once it is accepted, and download your visa when it is ready.</p>
         </div>
       </div>
 
@@ -140,7 +169,7 @@ export default async function MyVisaApplications() {
           const pid = a.product_id || a.visa_product_id
           const title = (pid && prodName.get(pid)) || a.visa_type || 'Visa application'
           const lab = LABEL[a.status] || [a.status, '#eef0f3', '#4b5f7a']
-          const people = names.get(a.id) || []
+          const list = people.get(a.id) || []
           const fee = Number(a.fee ?? a.total_amount ?? 0)
           const payBy = a.fee_set_at ? new Date(new Date(a.fee_set_at).getTime() + 3 * 86400000).toISOString() : null
 
@@ -151,7 +180,7 @@ export default async function MyVisaApplications() {
                   <h2 className="vy-name">{title}</h2>
                   <p className="vy-sub">
                     {a.applicant_type === 'family' ? 'Family application' : 'Individual application'}
-                    {people.length ? ` · ${people.join(', ')}` : ''}
+                    {list.length ? ` · ${list.map((p) => p.name).join(', ')}` : ''}
                   </p>
                 </div>
                 <span className="vy-badge" style={{ background: lab[1], color: lab[2] }}>{lab[0]}</span>
@@ -195,7 +224,31 @@ export default async function MyVisaApplications() {
 
               {a.status === 'Approved' && (
                 <div className="vy-msg good">
-                  Your visa application is approved. Our team will contact you about the next steps.
+                  Your visa application is approved and our team is preparing your visa. We will email you as soon as
+                  it is ready to download here.
+                </div>
+              )}
+
+              {a.status === 'Issued' && (
+                <div className="vy-msg good">
+                  <b>Your visa is ready.</b> Download it below{list.length > 1 ? ' (one file for each person)' : ''}.
+                  Please check every detail carefully, and call us at once if anything looks wrong.
+                  <div className="vy-files">
+                    {list.map((p) => {
+                      const u = fileUrl.get(p.id)
+                      return (
+                        <div className="vy-file" key={p.id}>
+                          <span>{p.name}</span>
+                          {u ? (
+                            <a className="vy-dl" href={u} target="_blank" rel="noreferrer">Download visa</a>
+                          ) : (
+                            <span className="vy-na">Not available yet. Please contact the office.</span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div className="vy-fine">Download links work for 15 minutes. Reload this page for a fresh link.</div>
                 </div>
               )}
 

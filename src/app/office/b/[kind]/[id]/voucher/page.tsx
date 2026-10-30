@@ -2,8 +2,30 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import QRCode from 'qrcode'
 import { createClient } from '@/utils/supabase/server'
-import { customerMap, fmt, officeCss, paidOf, pkt } from '@/app/office/lib'
+import { customerMap, dmy, fmt, officeCss, paidOf, pkt } from '@/app/office/lib'
 import PrintButton from '@/app/office/PrintButton'
+import TicketVoucher from './TicketVoucher'
+
+const dayLabel = (s: string) =>
+  s && s.length >= 10
+    ? new Date(s.slice(0, 10) + 'T00:00:00Z').toLocaleDateString('en-GB', {
+        weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC',
+      })
+    : ''
+
+const clock = (s: string) => (s && s.length >= 16 ? s.slice(11, 16) : '')
+
+const duration = (a: string, b: string) => {
+  if (!a || !b) return ''
+  const m = Math.round((Date.parse(a.slice(0, 16) + 'Z') - 0 > 0 ? (Date.parse(b.slice(0, 16) + 'Z') - Date.parse(a.slice(0, 16) + 'Z')) / 60000 : NaN))
+  if (isNaN(m) || m <= 0) return ''
+  return `${Math.floor(m / 60)}h ${m % 60}m`
+}
+
+const paxType = (title: string) => {
+  const t = String(title || '').toUpperCase()
+  return t.startsWith('INF') ? 'Infant' : t.startsWith('CHD') ? 'Child' : 'Adult'
+}
 
 export default async function OfficeVoucher({
   params,
@@ -24,30 +46,6 @@ export default async function OfficeVoucher({
     .eq(isPkg ? 'booking_id' : 'ticket_booking_id', id)
     .order('created_at')
 
-  let title = ''
-  let lines: string[] = []
-  if (isPkg) {
-    const { data: p } = await supabase.from('packages').select('name, package_type, days, departure_date').eq('id', b.package_id).single()
-    title = p?.name || 'Package'
-    lines = [`${p?.package_type || ''} package`, `${p?.days || ''} days`, `Departure: ${String(p?.departure_date).slice(0, 10)}`]
-  } else {
-    const { data: t } = await supabase.from('tickets').select('*').eq('id', b.ticket_id).single()
-    const { data: a } = await supabase.from('airlines').select('name').eq('id', t?.airline_id).maybeSingle()
-    title = `${t?.origin} → ${t?.destination}`
-    const dt = String(t?.departure_datetime)
-    const at = String(t?.arrival_datetime)
-    lines = [
-      `${a?.name || 'Airline'} · Flight ${t?.flight_number}`,
-      `Departs: ${dt.slice(0, 10)} ${dt.slice(11, 16)}`,
-      `Arrives: ${at.slice(0, 10)} ${at.slice(11, 16)}`,
-      `Baggage: ${t?.baggage_allowance || '—'}`,
-    ]
-    const segs = Array.isArray(t?.segments) ? t.segments : []
-    segs.forEach((s: any) => {
-      lines.push(`${s.origin} → ${s.destination} · ${s.flight_number} · ${String(s.departure_datetime).replace('T', ' ')}`)
-    })
-  }
-
   const cmap = await customerMap(supabase, [b.customer_id])
   const cust = b.customer_id ? cmap.get(b.customer_id) : null
 
@@ -57,16 +55,133 @@ export default async function OfficeVoucher({
 
   let statusTitle = ''
   let statusText = ''
+  let statusTextHidden = ''
   let color = '#1f7a55'
   let bg = '#e6f4ee'
-  if (b.status === 'Cancelled') { statusTitle = 'CANCELLED'; statusText = 'This booking has been cancelled and is not valid for travel.'; color = '#b3261e'; bg = '#fdecea' }
-  else if (b.status === 'Expired') { statusTitle = 'EXPIRED'; statusText = 'The seat hold ran out. This booking is not valid.'; color = '#6b7c93'; bg = '#eef0f3' }
-  else if (b.payment_type === 'FOC') { statusTitle = 'FOC — FREE OF CHARGE'; statusText = 'No payment is due on this booking.'; color = '#6a3fb5'; bg = '#efe9fb' }
-  else if (b.status === 'Paid') { statusTitle = 'PAID'; statusText = `Fully paid: ${fmt(paid)}.` }
-  else if (b.status === 'Partial') { statusTitle = 'PARTIAL PAYMENT'; statusText = `Paid ${fmt(paid)}. Balance ${fmt(balance)}${b.balance_due_date ? ' due by ' + b.balance_due_date : ''}.`; color = '#a8761a'; bg = '#fff4de' }
-  else { statusTitle = 'PAY LATER — NOT YET PAID'; statusText = `Balance ${fmt(balance)}. Seats held until ${pkt(b.expires_at)}.`; color = '#2a5fa8'; bg = '#e8f0fb' }
+  if (b.status === 'Cancelled') {
+    statusTitle = 'CANCELLED'
+    statusText = 'This booking has been cancelled and is not valid for travel.'
+    statusTextHidden = statusText
+    color = '#b3261e'; bg = '#fdecea'
+  } else if (b.status === 'Expired') {
+    statusTitle = 'EXPIRED'
+    statusText = 'The seat hold ran out. This booking is not valid.'
+    statusTextHidden = statusText
+    color = '#6b7c93'; bg = '#eef0f3'
+  } else if (b.payment_type === 'FOC') {
+    statusTitle = 'FOC — FREE OF CHARGE'
+    statusText = 'No payment is due on this booking.'
+    statusTextHidden = statusText
+    color = '#6a3fb5'; bg = '#efe9fb'
+  } else if (b.status === 'Paid') {
+    statusTitle = 'PAID'
+    statusText = `Fully paid: ${fmt(paid)}.`
+    statusTextHidden = 'Fully paid.'
+  } else if (b.status === 'Partial') {
+    statusTitle = 'PARTIAL PAYMENT'
+    statusText = `Paid ${fmt(paid)}. Balance ${fmt(balance)}${b.balance_due_date ? ' due by ' + b.balance_due_date : ''}.`
+    statusTextHidden = `Partial payment received.${b.balance_due_date ? ' Balance due by ' + b.balance_due_date + '.' : ''}`
+    color = '#a8761a'; bg = '#fff4de'
+  } else {
+    statusTitle = 'PAY LATER — NOT YET PAID'
+    statusText = `Balance ${fmt(balance)}. Seats held until ${pkt(b.expires_at)}.`
+    statusTextHidden = `Not yet paid. Seats held until ${pkt(b.expires_at)}.`
+    color = '#2a5fa8'; bg = '#e8f0fb'
+  }
 
   const qr = await QRCode.toDataURL(`https://aimaconcerns.com/office/find?ref=${b.reference}`, { margin: 1, width: 200 })
+
+  // ---------- FLIGHT TICKET: new style with Hide fare ----------
+  if (!isPkg) {
+    const { data: t } = await supabase.from('tickets').select('*').eq('id', b.ticket_id).single()
+    const { data: a } = await supabase
+      .from('airlines')
+      .select('name, logo_url')
+      .eq('id', t?.airline_id)
+      .maybeSingle()
+
+    const mk = (label: string, flight: any, o: any, d: any, dep: any, arr: any) => {
+      const ds = String(dep || '')
+      const as = String(arr || '')
+      return {
+        label,
+        flight: String(flight || ''),
+        origin: String(o || ''),
+        destination: String(d || ''),
+        depDate: dayLabel(ds),
+        depTime: clock(ds),
+        arrDate: dayLabel(as),
+        arrTime: clock(as),
+        duration: duration(ds, as),
+      }
+    }
+
+    const legs: ReturnType<typeof mk>[] = []
+    if (t) {
+      if (t.ticket_type === 'Multi City') {
+        legs.push(mk('LEG 1', t.flight_number, t.origin, t.destination, t.departure_datetime, t.arrival_datetime))
+        const segs: any[] = Array.isArray(t.segments) ? t.segments : []
+        segs.forEach((s: any, i: number) => {
+          legs.push(mk(`LEG ${i + 2}`, s.flight_number, s.origin, s.destination, s.departure_datetime, s.arrival_datetime))
+        })
+      } else {
+        legs.push(
+          mk(t.ticket_type === 'Return' ? 'OUTBOUND' : 'FLIGHT', t.flight_number, t.origin, t.destination, t.departure_datetime, t.arrival_datetime)
+        )
+        if (t.ticket_type === 'Return' && t.return_departure_datetime) {
+          legs.push(
+            mk('RETURN', t.return_flight_number, t.destination, t.origin, t.return_departure_datetime, t.return_arrival_datetime)
+          )
+        }
+      }
+    }
+
+    const route = t ? `${t.origin} → ${t.destination}${t.flight_number ? ' · ' + t.flight_number : ''}` : 'Flight ticket'
+    const passengers = (pax || []).map((p: any, i: number) => ({
+      n: i + 1,
+      name: `${p.title} ${p.given_name} ${p.surname}`,
+      type: paxType(p.title),
+      dob: dmy(p.date_of_birth),
+      passport: String(p.passport_number || ''),
+      fare: Number(p.price || 0),
+    }))
+
+    return (
+      <div>
+        <style>{officeCss}</style>
+        <TicketVoucher
+          id={id}
+          reference={String(b.reference || '')}
+          airlineName={a?.name || 'Airline'}
+          airlineLogo={a?.logo_url || null}
+          qr={qr}
+          statusTitle={statusTitle}
+          statusColor={color}
+          statusBg={bg}
+          statusTextFull={statusText}
+          statusTextHidden={statusTextHidden}
+          waFull={`Aima Concerns booking ${b.reference} — ${route}. ${statusTitle}. ${statusText}`}
+          waHidden={`Aima Concerns booking ${b.reference} — ${route}. ${statusTitle}. ${statusTextHidden}`}
+          isFoc={b.payment_type === 'FOC'}
+          passengers={passengers}
+          legs={legs}
+          baggage={String(t?.baggage_allowance || '')}
+          cabin="Economy"
+          ticketType={String(t?.ticket_type || '')}
+          bookedFor={cust ? cust.out_full_name : 'Walk-in customer'}
+          remarks={String(b.remarks || '')}
+          total={total}
+          paid={paid}
+          balance={balance}
+        />
+      </div>
+    )
+  }
+
+  // ---------- PACKAGE VOUCHER: unchanged ----------
+  const { data: p } = await supabase.from('packages').select('name, package_type, days, departure_date').eq('id', b.package_id).single()
+  const title = p?.name || 'Package'
+  const lines = [`${p?.package_type || ''} package`, `${p?.days || ''} days`, `Departure: ${String(p?.departure_date).slice(0, 10)}`]
   const wa = `https://wa.me/?text=${encodeURIComponent(`Aima Concerns booking ${b.reference} — ${title}. ${statusTitle}. ${statusText}`)}`
 
   return (
@@ -101,7 +216,7 @@ export default async function OfficeVoucher({
       <div className="v-wrap">
         <div className="v-top">
           <div><h2>AIMA CONCERNS</h2><p>TRAVEL &amp; TOURS · EST. 1999</p></div>
-          <div style={{ fontSize: 13, fontWeight: 700 }}>{isPkg ? 'E-VOUCHER' : 'E-TICKET'}</div>
+          <div style={{ fontSize: 13, fontWeight: 700 }}>E-VOUCHER</div>
         </div>
         <div className="v-body">
           <div className="v-ref">
@@ -125,13 +240,13 @@ export default async function OfficeVoucher({
             <table className="t">
               <thead><tr><th>#</th><th>Passenger</th><th>Date of birth</th><th>Passport</th><th>Expiry</th></tr></thead>
               <tbody>
-                {(pax || []).map((p: any, i: number) => (
-                  <tr key={p.id}>
+                {(pax || []).map((x: any, i: number) => (
+                  <tr key={x.id}>
                     <td>{i + 1}</td>
-                    <td>{p.title} {p.given_name} {p.surname}</td>
-                    <td>{p.date_of_birth}</td>
-                    <td>{p.passport_number}</td>
-                    <td>{p.passport_expiry_date}</td>
+                    <td>{x.title} {x.given_name} {x.surname}</td>
+                    <td>{x.date_of_birth}</td>
+                    <td>{x.passport_number}</td>
+                    <td>{x.passport_expiry_date}</td>
                   </tr>
                 ))}
               </tbody>

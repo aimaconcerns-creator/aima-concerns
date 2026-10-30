@@ -8,7 +8,7 @@ import PrintButton from '@/app/office/PrintButton'
 
 type Row = {
   id: string
-  kind: 'passenger' | 'payment'
+  kind: 'passenger' | 'payment' | 'debit'
   date: string
   dateLabel: string
   particulars: string
@@ -94,7 +94,7 @@ export default function PartyLedger(props: Props) {
   const router = useRouter()
   const supabase = createClient()
 
-  const [panel, setPanel] = useState<'' | 'pax' | 'pay'>('')
+  const [panel, setPanel] = useState<'' | 'pax' | 'pay' | 'debit'>('')
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -102,6 +102,11 @@ export default function PartyLedger(props: Props) {
   const [payAmount, setPayAmount] = useState('')
   const [payMethod, setPayMethod] = useState('Cash')
   const [payNote, setPayNote] = useState('')
+
+  const [debDate, setDebDate] = useState(today)
+  const [debText, setDebText] = useState('')
+  const [debAmount, setDebAmount] = useState('')
+  const [debNote, setDebNote] = useState('')
 
   const [q, setQ] = useState('')
   const [hits, setHits] = useState<any[]>([])
@@ -146,6 +151,29 @@ export default function PartyLedger(props: Props) {
     if (ok) {
       setPayAmount('')
       setPayNote('')
+      setPanel('')
+    }
+  }
+
+  const addDebit = async () => {
+    const text = debText.trim()
+    const amt = Number(debAmount)
+    if (!text) {
+      setMsg({ ok: false, text: 'Write what this debit is for.' })
+      return
+    }
+    if (!amt || amt <= 0) {
+      setMsg({ ok: false, text: 'Enter an amount above zero.' })
+      return
+    }
+    const ok = await run('add_party_debit', {
+      p_party_id: party.id, p_date: debDate || today, p_description: text,
+      p_amount: amt, p_note: debNote.trim() || null,
+    }, 'Debit added.')
+    if (ok) {
+      setDebText('')
+      setDebAmount('')
+      setDebNote('')
       setPanel('')
     }
   }
@@ -213,7 +241,7 @@ export default function PartyLedger(props: Props) {
     setEditId(r.id)
     setEDate(r.date)
     setEText(r.particulars)
-    setEAmount(String(r.kind === 'passenger' ? r.debit : r.credit))
+    setEAmount(String(r.kind === 'payment' ? r.credit : r.debit))
     setEMethod(r.method || 'Cash')
     setENote(r.note || '')
     setMsg(null)
@@ -254,6 +282,9 @@ export default function PartyLedger(props: Props) {
           <button className={'btn' + (panel === 'pax' ? ' navy' : '')} onClick={() => setPanel(panel === 'pax' ? '' : 'pax')}>
             Add passengers
           </button>
+          <button className={'btn' + (panel === 'debit' ? ' navy' : '')} onClick={() => setPanel(panel === 'debit' ? '' : 'debit')}>
+            Add debit
+          </button>
           <button className={'btn' + (panel === 'pay' ? ' navy' : '')} onClick={() => setPanel(panel === 'pay' ? '' : 'pay')}>
             Add payment
           </button>
@@ -291,6 +322,27 @@ export default function PartyLedger(props: Props) {
             <div><button className="btn" disabled={busy} onClick={addPayment}>{busy ? 'Saving...' : 'Save payment'}</button></div>
           </div>
           <p className="note">If this is more than the party owes, the extra shows as a credit in TOTAL REMAINING.</p>
+        </div>
+      )}
+
+      {panel === 'debit' && (
+        <div className="card no-print">
+          <h3>Add a manual debit to {party.name}</h3>
+          <div className="pl-grid">
+            <div><label className="lab">Date</label><input type="date" className="in" value={debDate} onChange={(e) => setDebDate(e.target.value)} /></div>
+            <div>
+              <label className="lab">Description</label>
+              <input className="in" maxLength={200} value={debText} placeholder="e.g. Extra baggage"
+                onChange={(e) => setDebText(e.target.value)} />
+            </div>
+            <div><label className="lab">Amount (PKR)</label><input type="number" className="in" value={debAmount} onChange={(e) => setDebAmount(e.target.value)} /></div>
+            <div><label className="lab">Note (optional)</label><input className="in" value={debNote} onChange={(e) => setDebNote(e.target.value)} /></div>
+            <div><button className="btn" disabled={busy} onClick={addDebit}>{busy ? 'Saving...' : 'Save debit'}</button></div>
+          </div>
+          <p className="note">
+            A manual debit raises what {party.name} owes. It is not tied to any passenger or booking, and it does not
+            change any booking or the Group Ledger.
+          </p>
         </div>
       )}
 
@@ -385,7 +437,7 @@ export default function PartyLedger(props: Props) {
           </thead>
           <tbody>
             {rows.length === 0 && (
-              <tr><td colSpan={6} className="none">No entries yet. Add passengers or a payment above.</td></tr>
+              <tr><td colSpan={6} className="none">No entries yet. Add passengers, a debit or a payment above.</td></tr>
             )}
 
             {rows.map((r) =>
@@ -393,8 +445,8 @@ export default function PartyLedger(props: Props) {
                 <tr key={r.id} className="no-print er">
                   <td><input type="date" className="in" value={eDate} onChange={(e) => setEDate(e.target.value)} /></td>
                   <td>
-                    {r.kind === 'passenger' ? (
-                      <input className="in" value={eText} onChange={(e) => setEText(e.target.value)} />
+                    {r.kind !== 'payment' ? (
+                      <input className="in" maxLength={200} value={eText} onChange={(e) => setEText(e.target.value)} />
                     ) : (
                       <select className="in" value={eMethod} onChange={(e) => setEMethod(e.target.value)}>
                         {METHODS.map((m) => <option key={m}>{m}</option>)}
@@ -404,7 +456,7 @@ export default function PartyLedger(props: Props) {
                       onChange={(e) => setENote(e.target.value)} />
                   </td>
                   <td>
-                    {r.kind === 'passenger' ? (
+                    {r.kind !== 'payment' ? (
                       <input type="number" className="in" value={eAmount} onChange={(e) => setEAmount(e.target.value)} />
                     ) : null}
                   </td>
@@ -428,7 +480,7 @@ export default function PartyLedger(props: Props) {
                     {r.cancelled ? <div className="sm">Booking cancelled</div> : null}
                     {r.by ? <div className="sm no-print">by {r.by}</div> : null}
                   </td>
-                  <td className="r">{r.kind === 'passenger' ? n0(r.debit) : ''}</td>
+                  <td className="r">{r.kind !== 'payment' ? n0(r.debit) : ''}</td>
                   <td className="r">{r.kind === 'payment' ? n0(r.credit) : ''}</td>
                   <td className="r">{bal(r.balance)}</td>
                   <td className="no-print">

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Montserrat } from 'next/font/google'
 import { createClient } from '@/utils/supabase/server'
 import OfficeLogoutButton from './OfficeLogoutButton'
+import PageTransition from "./PageTransition"
 
 const montserrat = Montserrat({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'] })
 
@@ -131,7 +132,9 @@ export default async function OfficeLayout({
         </div>
       </header>
 
-      <main className="content">{children}</main>
+      <main className="content">
+        <PageTransition>{children}</PageTransition>
+      </main>
     </div>
   )
 }

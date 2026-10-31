@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase/server'
 import { TicketTypeProvider, TicketTypeSelect, ReturnSection, MultiCitySection } from './TripType'
 import { AirportSelect } from '../../airports'
 import DurationPreview from '../../DurationPreview'
+import { cleanPnr } from '../../pnr'
 
 const STATUSES = ['Booking Open', 'Sold Out', 'Booking Closed', 'Departed']
 
@@ -32,6 +33,8 @@ async function updateTicket(formData: FormData) {
   const status = formData.get('status') as string
   const isHidden = formData.get('is_hidden') === 'on'
   const notes = formData.get('notes') as string
+  const pnr = cleanPnr(formData.get('pnr'))
+  if (!pnr.ok) redirect(`/admin/tickets/${id}/edit?error=` + encodeURIComponent(pnr.message))
 
   let segments: any[] | null = null
   if (ticketType === 'Multi City') {
@@ -75,6 +78,17 @@ async function updateTicket(formData: FormData) {
     redirect(`/admin/tickets/${id}/edit?error=` + encodeURIComponent(error.message))
   }
 
+  if (pnr.value) {
+    const { error: pnrError } = await supabase
+      .from('ticket_pnr')
+      .upsert({ ticket_id: id, pnr: pnr.value, updated_at: new Date().toISOString() })
+    if (pnrError) {
+      redirect(`/admin/tickets/${id}/edit?error=` + encodeURIComponent('The PNR could not be saved: ' + pnrError.message))
+    }
+  } else {
+    await supabase.from('ticket_pnr').delete().eq('ticket_id', id)
+  }
+
   revalidatePath('/admin/tickets')
   redirect('/admin/tickets')
 }
@@ -99,6 +113,7 @@ export default async function EditTicketPage({
   if (!ticket) notFound()
 
   const { data: airlines } = await supabase.from('airlines').select('id, name').order('name')
+  const { data: pnrRow } = await supabase.from('ticket_pnr').select('pnr').eq('ticket_id', id).maybeSingle()
 
   return (
     <div style={{ padding: '34px', maxWidth: '900px' }}>
@@ -165,6 +180,11 @@ export default async function EditTicketPage({
             <div className="field-wrap">
               <label className="field-label">Flight Number</label>
               <input type="text" name="flight_number" required defaultValue={ticket.flight_number} className="field-input" />
+            </div>
+
+            <div className="field-wrap">
+              <label className="field-label">PNR (optional)</label>
+              <input type="text" name="pnr" maxLength={12} placeholder="e.g. NP69VN" defaultValue={pnrRow?.pnr ?? ''} className="field-input" style={{ textTransform: 'uppercase' }} />
             </div>
 
             <div className="field-wrap">

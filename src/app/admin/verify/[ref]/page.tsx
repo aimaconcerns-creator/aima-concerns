@@ -40,7 +40,7 @@ export default async function VerifyBookingPage({ params }: { params: Promise<{ 
     const { data } = await supabase
       .from('ticket_bookings')
       .select(
-        'id, reference, status, total_amount, paid_at, customer_id, phone_number, booking_source, payment_type, amount_paid, remarks, foc_reason, expires_at, tickets(origin, destination, flight_number, ticket_type, departure_datetime, arrival_datetime, return_departure_datetime, return_arrival_datetime, return_flight_number, airlines(name)), ticket_booking_passengers(id, title, given_name, surname, passport_number, price)'
+        'id, reference, status, total_amount, paid_at, customer_id, phone_number, ticket_id, booking_source, payment_type, amount_paid, remarks, foc_reason, expires_at, tickets(origin, destination, flight_number, ticket_type, departure_datetime, arrival_datetime, return_departure_datetime, return_arrival_datetime, return_flight_number, airlines(name)), ticket_booking_passengers(id, title, given_name, surname, passport_number, price)'
       )
       .eq('reference', reference)
       .maybeSingle()
@@ -59,6 +59,12 @@ export default async function VerifyBookingPage({ params }: { params: Promise<{ 
         </div>
       </div>
     )
+  }
+
+  let pnr: string | null = null
+  if (tb && tb.ticket_id) {
+    const { data: pr } = await supabase.from('ticket_pnr').select('pnr').eq('ticket_id', tb.ticket_id).maybeSingle()
+    pnr = pr?.pnr || null
   }
 
   let customer: any = null
@@ -138,6 +144,11 @@ export default async function VerifyBookingPage({ params }: { params: Promise<{ 
         <p style={line}>
           Source: <b style={{ color: '#155263' }}>{offline ? 'Offline (office)' : 'Online'}</b>
         </p>
+        {pnr && (
+          <p style={line}>
+            PNR: <b style={{ color: '#155263' }}>{pnr}</b>
+          </p>
+        )}
         {isTicket && b.phone_number && (
           <p style={line}>
             Contact phone: <b style={{ color: '#155263' }}>{b.phone_number}</b>

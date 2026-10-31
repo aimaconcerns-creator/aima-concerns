@@ -28,6 +28,7 @@ type Pax = {
 type Props = {
   id: string
   reference: string
+  pnr: string | null
   airlineName: string
   airlineLogo: string | null
   qr: string
@@ -69,6 +70,7 @@ const css = `
 .tv-ref { display: flex; align-items: center; gap: 14px; text-align: right; }
 .tv-ref small { display: block; font-size: 10px; letter-spacing: .2em; color: #f3d9a4; font-weight: 700; }
 .tv-ref b { display: block; font-size: 30px; letter-spacing: .1em; margin-top: 3px; }
+.tv-code { display: block; font-size: 11px; letter-spacing: .12em; color: #f3d9a4; font-style: normal; font-weight: 700; margin-top: 4px; }
 .tv-qr { background: #fff; padding: 4px; border-radius: 8px; line-height: 0; }
 .tv-qr img { width: 84px; height: 84px; }
 .tv-body { padding: 6px 26px 22px; }
@@ -153,8 +155,9 @@ export default function TicketVoucher(p: Props) {
           </div>
           <div className="tv-ref">
             <div>
-              <small>BOOKING REFERENCE</small>
-              <b>{p.reference}</b>
+              <small>PNR / BOOKING REFERENCE</small>
+              <b>{p.pnr || p.reference}</b>
+              {p.pnr ? <em className="tv-code">Booking code: {p.reference}</em> : null}
             </div>
             <div className="tv-qr"><img src={p.qr} alt="QR" /></div>
           </div>

@@ -136,6 +136,10 @@ export default async function OfficeVoucher({
       }
     }
 
+    const { data: pnrRow } = await supabase.from('ticket_pnr').select('pnr').eq('ticket_id', b.ticket_id).maybeSingle()
+    const pnr: string | null = pnrRow?.pnr || null
+    const waRef = pnr ? `PNR ${pnr} (booking ${b.reference})` : `booking ${b.reference}`
+
     const route = t ? `${t.origin} → ${t.destination}${t.flight_number ? ' · ' + t.flight_number : ''}` : 'Flight ticket'
     const passengers = (pax || []).map((p: any, i: number) => ({
       n: i + 1,
@@ -152,6 +156,7 @@ export default async function OfficeVoucher({
         <TicketVoucher
           id={id}
           reference={String(b.reference || '')}
+          pnr={pnr}
           airlineName={a?.name || 'Airline'}
           airlineLogo={a?.logo_url || null}
           qr={qr}
@@ -160,8 +165,8 @@ export default async function OfficeVoucher({
           statusBg={bg}
           statusTextFull={statusText}
           statusTextHidden={statusTextHidden}
-          waFull={`Aima Concerns booking ${b.reference} — ${route}. ${statusTitle}. ${statusText}`}
-          waHidden={`Aima Concerns booking ${b.reference} — ${route}. ${statusTitle}. ${statusTextHidden}`}
+          waFull={`Aima Concerns ${waRef} — ${route}. ${statusTitle}. ${statusText}`}
+          waHidden={`Aima Concerns ${waRef} — ${route}. ${statusTitle}. ${statusTextHidden}`}
           isFoc={b.payment_type === 'FOC'}
           passengers={passengers}
           legs={legs}

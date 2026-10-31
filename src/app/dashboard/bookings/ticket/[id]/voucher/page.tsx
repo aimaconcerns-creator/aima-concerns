@@ -47,7 +47,7 @@ export default async function TicketVoucherPage({ params }: { params: Promise<{ 
   const { data: b } = await supabase
     .from('ticket_bookings')
     .select(
-      'id, reference, status, total_amount, paid_at, phone_number, tickets(origin, destination, flight_number, ticket_type, departure_datetime, arrival_datetime, return_departure_datetime, return_arrival_datetime, return_flight_number, baggage_allowance, airlines(name, logo_url)), ticket_booking_passengers(id, title, given_name, surname, date_of_birth, nationality, passport_number, price, created_at)'
+      'id, reference, status, total_amount, paid_at, phone_number, ticket_id, tickets(origin, destination, flight_number, ticket_type, departure_datetime, arrival_datetime, return_departure_datetime, return_arrival_datetime, return_flight_number, baggage_allowance, airlines(name, logo_url)), ticket_booking_passengers(id, title, given_name, surname, date_of_birth, nationality, passport_number, price, created_at)'
     )
     .eq('id', id)
     .eq('customer_id', user.id)
@@ -55,6 +55,9 @@ export default async function TicketVoucherPage({ params }: { params: Promise<{ 
 
   if (!b) notFound()
   if (b.status !== 'Paid' || !b.reference) redirect('/dashboard/bookings')
+
+  const { data: pnrRow } = await supabase.from('ticket_pnr').select('pnr').eq('ticket_id', b.ticket_id).maybeSingle()
+  const pnr: string | null = pnrRow?.pnr || null
 
   const t: any = Array.isArray(b.tickets) ? b.tickets[0] : b.tickets
   const airline: any = t ? (Array.isArray(t.airlines) ? t.airlines[0] : t.airlines) : null
@@ -159,7 +162,8 @@ export default async function TicketVoucherPage({ params }: { params: Promise<{ 
           </div>
           <div className="v-pnr">
             <p>PNR / BOOKING REFERENCE</p>
-            <h1>{b.reference}</h1>
+            <h1>{pnr || b.reference}</h1>
+            {pnr && <p style={{ marginTop: 6 }}>BOOKING CODE: {b.reference}</p>}
           </div>
         </div>
 

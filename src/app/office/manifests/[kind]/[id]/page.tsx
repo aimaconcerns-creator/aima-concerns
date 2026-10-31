@@ -65,6 +65,8 @@ export default async function ManifestDetail({
     subject = `${t.origin} → ${t.destination}${t.ticket_type === 'Multi City' ? ' (Multi City)' : ''}`
     meta.push({ label: 'Airline', value: a?.name || '—' })
     meta.push({ label: 'Flight', value: t.flight_number || '—' })
+    const { data: pnrRow } = await supabase.from('ticket_pnr').select('pnr').eq('ticket_id', id).maybeSingle()
+    if (pnrRow?.pnr) meta.push({ label: 'PNR', value: pnrRow.pnr })
     meta.push({ label: 'Departure', value: `${dmy(dt)} ${dt.slice(11, 16)}` })
   }
 

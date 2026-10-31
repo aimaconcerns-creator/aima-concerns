@@ -50,6 +50,12 @@ export default async function BookingView({
     sub = `${t?.flight_number} · ${String(t?.departure_datetime).slice(0, 10)} ${String(t?.departure_datetime).slice(11, 16)}`
   }
 
+  let pnr: string | null = null
+  if (!isPkg) {
+    const { data: pr } = await supabase.from('ticket_pnr').select('pnr').eq('ticket_id', b.ticket_id).maybeSingle()
+    pnr = pr?.pnr || null
+  }
+
   const cmap = await customerMap(supabase, [b.customer_id])
   const cust = b.customer_id ? cmap.get(b.customer_id) : null
   const { data: log } = await supabase.from('booking_activity_log').select('*').eq('booking_id', id).order('created_at', { ascending: false })
@@ -67,7 +73,7 @@ export default async function BookingView({
       <div className="pg-bar" style={{ marginTop: 14, marginBottom: 6 }}>
         <div className="pg-h">
           <h1>{b.reference} <Badge label={payLabel(b)} /></h1>
-          <p>{title} · {sub}</p>
+          <p>{title} · {sub}{pnr ? ` · PNR ${pnr}` : ''}</p>
         </div>
       </div>
 
@@ -90,6 +96,7 @@ export default async function BookingView({
         <div className="kv">
           <div><small>Customer</small><b>{cust ? `${cust.out_full_name} (${cust.out_customer_code})` : 'Walk-in (no account)'}</b></div>
           <div><small>Source</small><b>{isOffline ? 'Offline' : 'Online'}</b></div>
+          {pnr && <div><small>PNR</small><b>{pnr}</b></div>}
           <div><small>Total</small><b>{fmt(total)}</b></div>
           <div><small>Paid</small><b>{fmt(paid)}</b></div>
           <div><small>Balance</small><b>{fmt(balance)}</b></div>

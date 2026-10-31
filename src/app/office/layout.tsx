@@ -118,7 +118,7 @@ export default async function OfficeLayout({
           </nav>
 
           <form action="/office/find" method="get" className="search">
-            <input name="ref" placeholder="Search reference, name or passport" required />
+            <input name="ref" placeholder="Reference, PNR, name, passport" required />
             <button type="submit">Search</button>
           </form>
 

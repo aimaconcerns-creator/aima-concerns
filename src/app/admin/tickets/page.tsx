@@ -4,6 +4,7 @@ import { createClient } from '@/utils/supabase/server'
 import DeleteTicketButton from './DeleteTicketButton'
 import { AirportSelect } from './airports'
 import DurationPreview from './DurationPreview'
+import { cleanPnr } from './pnr'
 import { TicketTypeProvider, TicketTypeSelect, ReturnSection, MultiCitySection } from './[id]/edit/TripType'
 
 async function addTicket(formData: FormData) {
@@ -27,6 +28,8 @@ async function addTicket(formData: FormData) {
   const infantPrice = Number(formData.get('infant_price') || 0)
   const availableSeats = Number(formData.get('available_seats'))
   const notes = formData.get('notes') as string
+  const pnr = cleanPnr(formData.get('pnr'))
+  if (!pnr.ok) throw new Error(pnr.message)
 
   let segments: any[] | null = null
   if (ticketType === 'Multi City') {
@@ -41,7 +44,7 @@ async function addTicket(formData: FormData) {
     }
   }
 
-  const { error } = await supabase.from('tickets').insert({
+  const { data: created, error } = await supabase.from('tickets').insert({
     ticket_type: ticketType,
     airline_id: airlineId || null,
     origin,
@@ -61,11 +64,20 @@ async function addTicket(formData: FormData) {
     is_hidden: false,
     notes,
     segments: ticketType === 'Multi City' ? segments : null,
-  })
+  }).select('id').single()
 
   if (error) {
     console.error('ADD TICKET ERROR:', error)
     throw new Error('Add ticket failed: ' + error.message)
+  }
+
+  if (pnr.value && created?.id) {
+    const { error: pnrError } = await supabase
+      .from('ticket_pnr')
+      .insert({ ticket_id: created.id, pnr: pnr.value })
+    if (pnrError) {
+      throw new Error('The ticket was added, but the PNR could not be saved: ' + pnrError.message)
+    }
   }
 
   revalidatePath('/admin/tickets')
@@ -117,6 +129,11 @@ export default async function AdminTicketsPage() {
     .from('tickets')
     .select('*, airlines(name)')
     .order('departure_datetime', { ascending: true })
+
+  const { data: pnrRows } = await supabase.from('ticket_pnr').select('ticket_id, pnr')
+  const pnrMap = new Map<string, string>(
+    (pnrRows || []).map((r: any) => [r.ticket_id, r.pnr] as [string, string])
+  )
 
   return (
     <div style={{ padding: '34px' }}>
@@ -219,6 +236,11 @@ export default async function AdminTicketsPage() {
             </div>
 
             <div className="field-wrap">
+              <label className="field-label">PNR (optional)</label>
+              <input type="text" name="pnr" maxLength={12} placeholder="e.g. NP69VN" className="field-input" style={{ textTransform: 'uppercase' }} />
+            </div>
+
+            <div className="field-wrap">
               <label className="field-label">Departure Date/Time</label>
               <input type="datetime-local" name="departure_datetime" required className="field-input" />
             </div>
@@ -294,6 +316,9 @@ export default async function AdminTicketsPage() {
                   <td>
                     <div className="route">{t.origin} → {t.destination}</div>
                     <div className="flight-no">{t.flight_number}</div>
+                    {pnrMap.get(t.id) ? (
+                      <div className="flight-no" style={{ color: '#d9a441', fontWeight: 700 }}>PNR {pnrMap.get(t.id)}</div>
+                    ) : null}
                   </td>
                   <td className="cell">{t.airlines?.name || '—'}</td>
                   <td className="cell">

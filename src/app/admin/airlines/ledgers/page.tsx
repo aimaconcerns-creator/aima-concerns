@@ -31,9 +31,28 @@ export default async function AirlineLedgersListPage() {
     balanceByAirline[airlineId] = (balanceByAirline[airlineId] ?? 0) + delta
   }
 
+  let payable = 0
+  let overpaid = 0
+  for (const v of Object.values(balanceByAirline)) {
+    if (v > 0) payable += v
+    else if (v < 0) overpaid += -v
+  }
+  const net = payable - overpaid
+  const fmt = (n: number) => (Math.round(n * 100) / 100).toLocaleString()
+
   return (
     <div style={{ padding: '34px' }}>
       <style>{`
+        .sum-bar {
+          display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin: 0 0 22px;
+        }
+        .sum-bar > div {
+          border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02);
+          padding: 14px 18px;
+        }
+        .sum-bar small { display: block; color: #7d93a3; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
+        .sum-bar b { font-size: 18px; color: #fff; }
+
         .al-wrap {
           border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08);
           background: rgba(255,255,255,0.02); box-shadow: 0 8px 24px rgba(0,0,0,0.35);
@@ -58,6 +77,19 @@ export default async function AirlineLedgersListPage() {
       <p style={{ color: '#7d93a3', fontSize: '14px', margin: '0 0 24px' }}>
         Track what Aima Concerns owes each airline. Click an airline to view its ledgers.
       </p>
+
+      {(airlines ?? []).length > 0 && (
+        <div className="sum-bar">
+          <div><small>Total payable to airlines</small><b style={{ color: '#ff8f8a' }}>PKR {fmt(payable)}</b></div>
+          <div><small>Overpaid to airlines</small><b style={{ color: '#5FE0A0' }}>PKR {fmt(overpaid)}</b></div>
+          <div>
+            <small>Net balance, all airlines</small>
+            <b style={{ color: net > 0.004 ? '#ff8f8a' : net < -0.004 ? '#5FE0A0' : '#a9bccb' }}>
+              PKR {fmt(Math.abs(net))} {net > 0.004 ? 'DR' : net < -0.004 ? 'CR' : ''}
+            </b>
+          </div>
+        </div>
+      )}
 
       <div className="al-wrap">
         {(!airlines || airlines.length === 0) && (

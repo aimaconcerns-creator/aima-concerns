@@ -81,3 +81,20 @@ export async function updateEntry(formData: FormData) {
   revalidateAll(airlineId, ledgerId)
   redirect(`/admin/airlines/ledgers/${airlineId}/${ledgerId}`)
 }
+export async function deleteEntry(formData: FormData) {
+  const airlineId = formData.get('airlineId') as string
+  const ledgerId = formData.get('ledgerId') as string
+  const entryId = formData.get('entryId') as string
+
+  if (!entryId) return
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('airline_ledger_entries')
+    .delete()
+    .eq('id', entryId)
+
+  if (error) throw new Error(error.message)
+
+  revalidateAll(airlineId, ledgerId)
+}

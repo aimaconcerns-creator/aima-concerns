@@ -52,10 +52,17 @@ export default async function AirlineLedgerListPage({
     : { data: [] }
 
   const balanceByLedger: Record<string, number> = {}
+  let totalDr = 0
+  let totalCr = 0
   for (const e of entries ?? []) {
-    const delta = e.type === 'debit' ? Number(e.amount) : -Number(e.amount)
+    const amt = Number(e.amount)
+    if (e.type === 'debit') totalDr += amt
+    else totalCr += amt
+    const delta = e.type === 'debit' ? amt : -amt
     balanceByLedger[e.ledger_id] = (balanceByLedger[e.ledger_id] ?? 0) + delta
   }
+  const totalBal = totalDr - totalCr
+  const fmt = (n: number) => Math.round(n * 100) / 100
 
   return (
     <div style={{ padding: '34px' }}>
@@ -79,6 +86,16 @@ export default async function AirlineLedgerListPage({
           padding: 11px 22px; background: #4a9c7a; color: #fff; border: none; border-radius: 8px;
           cursor: pointer; font-weight: 700; font-size: 14px;
         }
+
+        .sum-bar {
+          display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin: 0 0 22px;
+        }
+        .sum-bar > div {
+          border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02);
+          padding: 14px 18px;
+        }
+        .sum-bar small { display: block; color: #7d93a3; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
+        .sum-bar b { font-size: 18px; color: #fff; }
 
         .ledger-wrap {
           border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08);
@@ -121,6 +138,19 @@ export default async function AirlineLedgerListPage({
           <button type="submit" className="btn-submit">Add Ledger</button>
         </form>
       </div>
+
+      {(ledgers ?? []).length > 0 && (
+        <div className="sum-bar">
+          <div><small>Total debits</small><b>PKR {fmt(totalDr).toLocaleString()}</b></div>
+          <div><small>Total credits</small><b>PKR {fmt(totalCr).toLocaleString()}</b></div>
+          <div>
+            <small>Total balance — {airline.name}</small>
+            <b style={{ color: totalBal > 0.004 ? '#ff8f8a' : totalBal < -0.004 ? '#5FE0A0' : '#a9bccb' }}>
+              PKR {Math.abs(fmt(totalBal)).toLocaleString()} {totalBal > 0.004 ? 'DR' : totalBal < -0.004 ? 'CR' : ''}
+            </b>
+          </div>
+        </div>
+      )}
 
       <div className="ledger-wrap">
         {(!ledgers || ledgers.length === 0) && (
